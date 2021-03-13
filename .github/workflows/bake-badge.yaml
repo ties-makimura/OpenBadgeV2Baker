@@ -1,0 +1,62 @@
+name: Bake-Open-Digital-BadgeV2
+on:
+  # 完成時には、pushをトリガとする。
+  schedule:
+    - cron: '*/20 * * * *'
+jobs:
+  main:
+    name: Bake Digital Badge
+    runs-on: ubuntu-latest
+    steps:
+      # 自分のrepository を check out する。
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          repository: '${{ github.repository }}'
+          ref: main
+      # Identity を設定
+      - name: set identity
+        run: |
+          git config --global user.email "bot@example.com"
+          git config --global user.name "bot"
+      # Bake Badge
+      # 1. push されたデータを検査して、ダメなら終了
+      #   1.1 python のインストール
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v2
+        with:
+          # セマンティックバージョン範囲構文もしくは厳密なPythonのバージョン
+          python-version: '3.x'
+          # オプション - x64もしくはx86アーキテクチャ、デフォルトはx64
+          architecture: 'x64'
+      # 現在のPythonのバージョンを出力して、マトリクスをテストできる
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+      # install pip and apply requirements.txt then show pip version
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip -V
+      # 2. Bake する環境設定
+      #  2.1 pythonのバージョン確認
+      #  2.2 pip3 openbadges-bakery
+      # 3. もらったデータを読みつつBakeする
+      #   3.1 何らかのエラー、例外の発生
+      #   3.2 成功したら焼いたデータをID毎にArtifactの領域へコピー
+      #     - なにをコピーするのかも検討する。
+      #       - badge
+      #       - JSONデータ?
+      #       - [ ] source/destination ディレクトリを確定する。
+      #   全部終わった後にコピーするかは要検討
+      - name: Create artifact files
+        run: |
+          mkdir BakedBadges
+          pwd
+          ls -la
+          # 
+          # cp source BakedBadges
+      - uses: actions/upload-artifact@v1
+        with:
+          name: BakedBadges
+          path: BakedBadges
