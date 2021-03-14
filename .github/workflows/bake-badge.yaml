@@ -51,12 +51,14 @@ jobs:
       #   全部終わった後にコピーするかは要検討
       - name: Create artifact files
         run: |
-          mkdir BakedBadges
+          mkdir BakedData
           pwd
           ls -la
-          # 
+          cp sample/* BakedData
+          # Copy sample Badge
+          #
           # cp source BakedBadges
       - uses: actions/upload-artifact@v1
         with:
           name: BakedBadges
-          path: BakedBadges
+          path: BakedData
