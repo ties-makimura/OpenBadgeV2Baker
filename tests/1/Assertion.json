@@ -1,0 +1,16 @@
+{
+  "@context": "https://w3id.org/openbadges/v2",
+  "type": "Assertion",
+  "id": "https://gongova.org/badges/member001gongovaP2020.json",
+  "recipient": {
+    "type": "email",
+    "hashed": "True",
+    "salt": "Y4MJO3ZTTYHZTU6YLJKIYOFTHZPINXUV",
+    "identity": "sha256$9b2b7d2c5c82ec6862e7d57d150b9b57165571fe1abe12c773828368f772efa3"
+  },
+  "badge": "https://gongova.org/badges/gongovaP2020.json",
+  "verification": {
+    "type": "hosted"
+  },
+  "issuedOn": "2021-03-31T23:59:59+00:00"
+}
