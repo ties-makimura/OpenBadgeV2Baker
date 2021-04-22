@@ -1,0 +1,29 @@
+MAKEFLAGS += --warn-undefined-variables
+SHELL := /bin/bash
+.SHELLFLAGS := -eu -o pipefail -c
+.DEFAULT_GOAL := help
+
+# all targets are phony
+.PHONY: $(shell egrep -o ^[a-zA-Z_-]+: $(MAKEFILE_LIST) | sed 's/://')
+
+
+#.PHONY: run test clean help
+
+run: ## run the program
+	python3 run.py
+
+test: ## Do the test
+	# tests directory 内のtest群をvervose modeで実行する。
+	python3 -m unittest discover tests -v
+
+clean: ## Clean up mess
+	rm -rf __pycache__
+	rm -rf .mypy_cache
+	rm OpenBadgeBake.log
+
+
+help: ## Print this help
+	@echo 'Usage: make [target]'
+	@echo ''
+	@echo 'Targets:'
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
