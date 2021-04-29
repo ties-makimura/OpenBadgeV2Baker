@@ -22,7 +22,7 @@ from logging import Logger
 import logging.handlers
 import typing
 
-# for email
+# for email , csv
 import re
 
 #
@@ -124,20 +124,34 @@ def CheckHTTPUrl(url:str) -> bool:
     else:
         return False
 
-def CheckCSVFileNames(p: Path) -> bool:
+def CheckCSVFileNames(pdir: Path) -> bool:
     """
-    指定するpathオブジェクトのglob('/*.csv')
+    pdir ディレクトリ
+    　指定するpathオブジェクトのglob('/*.csv')
     """
     filelist = ['tests/Assertions.csv', 'tests/BadgeClass.csv', 'tests/Issuer.csv']
-    l = list(p.glob('./*csv'))
+    if (pdir.is_dir):
+        # pdirはディレクトリだ。
+        #pprint.pprint([p for p in pdir.iterdir()])
+        # pprint.pprint([p for p in pdir.iterdir() if re.search('\w+\.csv', str(p))])
+        # dirにあるファイルを \w*\.csv で filter かけて、str にして、filelistと比較可能
+        # にして l へ出力する。
+        l = list([str(p) for p in pdir.iterdir() if re.search('\w*\.csv', str(p))])
 
-    pprint.pprint(p)
-    pprint.pprint(l)
+        print("pdir:")
+        pprint.pprint(pdir)
+        print("l")
+        pprint.pprint(l)
 
-    if (filelist == sorted(l)):
-        return True
+        if (filelist == sorted(l)):
+            return True
+        else:
+            return False
     else:
-        return False
+        raise ValueError('pdirはディレクトリではありません。')
+
+def MockWillBeChange() -> typing.Tuple[str, str] :
+    return ("aaa", "bbb")
 
 
 #def ReadAssertionsCsv(dir: str) -> 
