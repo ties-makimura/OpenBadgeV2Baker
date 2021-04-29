@@ -16,15 +16,24 @@
     - 
 - Validate を通過した csvをjsonに変換する
 """
-import logging, sys, os
+import sys
+import os
+from logging import Logger
 import logging.handlers
 import typing
 
 # for email
 import re
 
+#
+# csv file related
+#
+from pathlib import Path
+import csv
+import pprint
 
-def setup_logger(name, logfile = 'OpenBadgeBake.log'):
+
+def setup_logger(name, logfile = 'OpenBadgeBake.log') -> Logger:
     """
     エラーをログファイルと、標準出力に出す。
     ログファイルには、ERRORレベルのメッセージを出力する。
@@ -37,24 +46,33 @@ def setup_logger(name, logfile = 'OpenBadgeBake.log'):
     # create file handler which logs even DEBUG messages
     # fh = logging.FileHandler(logfile)
     # fh.setLevel(logging.DEBUG)
-    # fh_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(filename)s - %(name)s - %(funcName)s - %(message)s')
+    # fh_formatter =
+    # logging.Formatter(
+    #   '%(asctime)s - %(levelname)s - %(filename)s - %(name)s - %(funcName)s - %(message)s'
+    # )
     # fh.setFormatter(fh_formatter)
     #fh = logging.FileHandler(logfile)
     fh = logging.handlers.RotatingFileHandler(logfile, maxBytes=100000, backupCount=3)
     fh.setLevel(logging.ERROR)
-    fh_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(filename)s - %(name)s - %(funcName)s - %(message)s')
+    fh_formatter = logging.Formatter(
+        '%(asctime)s - %(levelname)s - %(filename)s - %(name)s - %(funcName)s - %(message)s')
     fh.setFormatter(fh_formatter)
 
     # create console handler with a INFO log level
     ch = logging.StreamHandler()
     ch.setLevel(logging.INFO)
-    ch_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', '%Y-%m-%d %H:%M:%S')
+    ch_formatter = logging.Formatter(
+        '%(asctime)s - %(levelname)s - %(message)s', '%Y-%m-%d %H:%M:%S')
     ch.setFormatter(ch_formatter)
 
     # add the handlers to the logger
     logger.addHandler(fh)
     logger.addHandler(ch)
-    return logger
+    return typing.cast(Logger,logger)
+
+
+logger = setup_logger(__name__)
+
 
 def func() -> bool:
     """
@@ -62,7 +80,7 @@ def func() -> bool:
     """
     return True
 
-def CheckEmailFormat(email:str) -> bool:
+def CheckEmailFormat(email: str) -> bool:
     """
     Emailアドレスのフォーマットをチェックする。
     ask him
@@ -74,3 +92,52 @@ def CheckEmailFormat(email:str) -> bool:
     else:
         # print("Invalid Email")
         return False
+
+def CheckSHA256Format(sha256: str) -> bool:
+    """
+    SHA256のフォーマットをチェックする
+    """
+    # 先頭にsha256$が、あっても、なくてもa-fと0-9までのhexを組み合わせた64文字である
+    regex = r'^((sha256|SHA256)\$|)[a-fA-F0-9]{64}(:.+)?$'
+    if (re.search(regex, sha256)):
+        return True
+    else:
+        return False
+
+def CheckContext(context:str) -> bool:
+    """
+    contextのチェックをする。
+    """
+    regex = r'^https://w3id.org/openbadges/v2$'
+    if (re.search(regex, context)):
+        return True
+    else:
+        return False
+
+def CheckHTTPUrl(url:str) -> bool:
+    """
+    URLのチェックをする
+    """
+    regex = r'https?://[\w/:%#\$&\?\(\)~\.=\+\-]+'
+    if (re.search(regex, url)):
+        return True
+    else:
+        return False
+
+def CheckCSVFileNames(p: Path) -> bool:
+    """
+    指定するpathオブジェクトのglob('/*.csv')
+    """
+    filelist = ['tests/Assertions.csv', 'tests/BadgeClass.csv', 'tests/Issuer.csv']
+    l = list(p.glob('./*csv'))
+
+    pprint.pprint(p)
+    pprint.pprint(l)
+
+    if (filelist == sorted(l)):
+        return True
+    else:
+        return False
+
+
+#def ReadAssertionsCsv(dir: str) -> 
