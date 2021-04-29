@@ -13,8 +13,10 @@ run: ## run the program
 	python3 run.py
 
 test: ## Do the test
-	# tests directory 内のtest群をvervose modeで実行する。
-	python3 -m unittest discover tests -v
+	# discover: tests directory 内のtest群を実行する。
+	# -v verbose mode で実行する。
+	# --locals トレースパック時のローカル変数を出力する。
+	python3 -m unittest discover tests -v --locals
 
 clean: ## Clean up mess
 	rm -rf __pycache__
