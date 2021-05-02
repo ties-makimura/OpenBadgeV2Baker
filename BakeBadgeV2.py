@@ -114,6 +114,58 @@ def CheckContext(context:str) -> bool:
     else:
         return False
 
+def CheckTypeAssertion(typ: str) -> bool:
+    """
+    typeが"Assertion"かを判定する。
+    """
+    regex = r'^Assertion'
+    if (re.search(regex, typ)):
+        return True
+    else:
+        return False
+
+def CheckRecipientType(typ: str) -> bool:
+    """
+    recipient:typeがemailかを判定する。
+    """
+    regex = r'^email'
+    if (re.search(regex, typ)):
+        return True
+    else:
+        return False
+
+def CheckRecipientHashed(param: str) -> bool:
+    """
+    Trueかどうかを判定する。
+    """
+    regex = r'^True'
+    if (re.search(regex, param)):
+        return True
+    else:
+        return False
+
+def CheckRecipientSalt(salt: str) -> bool:
+    """
+    saltの形式をチェックする。
+    32桁の英数
+    """
+    # regex = r'^[a-fA-F0-9]{32}(:.+)?$'
+    regex = r"^[A-Z0-9]{32}(:.+)?$"
+    if (re.search(regex, salt)):
+        return True
+    else:
+        return False
+
+def CheckTypeHosted(typ: str) -> bool:
+    """
+    hosted type かどうかを判定する
+    """
+    regex = r'^hosted'
+    if (re.search(regex, typ)):
+        return True
+    else:
+        return False
+
 def CheckHTTPUrl(url:str) -> bool:
     """
     URLのチェックをする
@@ -150,8 +202,211 @@ def CheckCSVFileNames(pdir: Path) -> bool:
     else:
         raise ValueError('pdirはディレクトリではありません。')
 
+def CheckAssersionsData(row, line:int) -> bool:
+    """
+    Assertions.csvの一行分のデータのチェックを行う。
+    エラーなら、ロギングを行う。
+    """
+    #                                    0     1     2     3     4     5     6     7     8     9     10
+    bErrorHappend: typing.List[bool] = [ True, True, True, True, True, True, True, True, True, True, True ] # 初期値はエラーが発生しているとする
+    #
+    # @context
+    #
+    if CheckContext(row[0]):
+        formatted = f'{line}行目の@contextは合っています。'
+        logger.info(formatted)
+        bErrorHappend[0] = False
+        pass
+    else:
+        formatted = f'{line}行目の@contextが間違っています。'
+        logger.error(formatted)
+        bErrorHappend[0] = True
+    #
+    # id
+    #
+    if CheckHTTPUrl(row[1]):
+        formatted = f'{line}行目のidはURLです。'
+        logger.info(formatted)
+        bErrorHappend[1] = False
+    else:
+        formatted = f'{line}行目のidはURLではありません。'
+        logger.error(formatted)
+        bErrorHappend[1] = True
+    #
+    # type
+    #
+    if CheckTypeAssertion(row[2]):
+        formatted = f'{line}行目のtypeがAssertionです。'
+        logger.info(formatted)
+        bErrorHappend[2] = False
+    else:
+        formatted = f'{line}行目のtypeがAssertionではありません。'
+        logger.error(formatted)
+        bErrorHappend[2] = True
+    #
+    #  recipient:type
+    #
+    if CheckRecipientType(row[3]):
+        formatted = f'{line}行目のrecipient:typeはemailです。'
+        logger.info(formatted)
+        bErrorHappend[3] = False
+    else:
+        formatted = f'{line}行目のrecipient:typeはemailではありません。'
+        logger.error(formatted)
+        bErrorHappend[3] = True
+    #
+    # recipient:hashed
+    #
+    if CheckRecipientHashed(row[4]):
+        formatted = f'{line}行目のrecipient:hashedはTrueです。'
+        logger.info(formatted)
+        bErrorHappend[4] = False
+    else:
+        formatted = f'{line}行目のrecipient:hashedはTrueではありません。'
+        logger.error(formatted)
+        bErrorHappend[4] = True
+    #
+    # recipient:salt
+    #
+    if CheckRecipientSalt(row[5]):
+        formatted = f'"{row[5]}" - {line}行目のrecipient:saltは32桁の英数字です。'
+        logger.info(formatted)
+        bErrorHappend[5] = False
+    else:
+        formatted = f'"{row[5]}" - {line}行目のrecipient:saltは32桁の英数字ではありません。'
+        logger.error(formatted)
+        bErrorHappend[5] = True
+    #
+    # recipient:identity
+    #
+    if CheckSHA256Format(row[6]):
+        formatted = f'"{row[6]}" - {line}行目のidentityは、SHA256形式です。'
+        logger.info(formatted)
+        bErrorHappend[6] = False
+    else:
+        formatted = f'"{row[6]}" - {line}行目のrecipient:identityは、SHA256形式ではありません'
+        logger.error(formatted)
+        bErrorHappend[6] = True
+    #
+    # Badge
+    #
+    if CheckHTTPUrl(row[7]):
+        formatted = f'"{row[7]}" - {line}行目のbadgeは、URLです。'
+        logger.info(formatted)
+        bErrorHappend[7] = False
+    else:
+        formatted = f'"{row[7]}" - {line}行目のbadgeは、URLではありません。'
+        logger.error(formatted)
+        bErrorHappend[7] = True
+    #
+    # verification:type
+    #
+    if CheckTypeHosted(row[8]):
+        formatted = f'"{row[8]}" - {line}行目のverification:typeは、hostedです。'
+        logger.info(formatted)
+        bErrorHappend[8] = False
+    else:
+        formatted = f'"{row[8]}" - {line}行目のverification:typeは、hostedではありません。'
+        logger.error(formatted)
+        bErrorHappend[8] = True
+    #
+    # issueOn
+    #
+    
+    #
+    # Expires
+    #
+    if any(bErrorHappend):
+        # どれかがエラー起きた。
+        return False
+    else:
+        # エラーが起きなかった。
+        return True
+
+
 def MockWillBeChange() -> typing.Tuple[str, str] :
+    """
+    モック用の確認コード
+    """
     return ("aaa", "bbb")
 
 
-#def ReadAssertionsCsv(dir: str) -> 
+def ReadAssertionsCsv(dir: Path) -> bool:
+    """
+    Assertions.csvを読み取りつつ検査する。検査結果はログと標準出力に書き出す。
+    下記の項目について検査を行う。
+    """
+    # 全部のデータがValidだったら、Trueになるフラグ
+    okData: bool = False
+
+    rpf: Path = dir / "Assertions.csv" # 相対パス付きのファイル名
+    logger.info(rpf.__repr__)
+    with open(rpf, newline='') as csvfile:
+        # 先読みしてどの、dialectかを判定する
+        dialect = csv.Sniffer().sniff(csvfile.read(1024))
+        # logger.info(dialect.__repr__)
+        csvfile.seek(0)
+        # headerあり?
+        # hasHeader = True : あり
+        # hasHeader = False: なし
+        hasHeader = csv.Sniffer().has_header(csvfile.read(1024))
+        if hasHeader:  # header行があるかどうか True/False
+            logger.info("%s has a header" % rpf)
+        else:
+            logger.error("Assertions.csvに、Headerがついていません。")
+        csvfile.seek(0)  # 先頭に戻る
+        
+        reader = csv.reader(csvfile, dialect)
+        line: int = 0
+        for row in reader:
+            if line == 0 and hasHeader:
+                # 0 行めで、ヘッダーありなら、スキップする。
+                line = line + 1
+                continue
+            print(line, row)
+            CheckAssersionsData(row, line)
+            #print(', '.join(row))
+            line = line + 1
+    okData = True # 全部のデータがVaildだった。
+    return okData
+
+def ReadBadgeClassCsv(dir: Path) -> bool:
+    """
+    BadgeClass.csvを読み取りつつ検査する。検査結果はログと標準出力に書き出す。
+    """
+    # 全部のデータがValidだったら、Trueになるフラグ
+    okData: bool = False
+
+    okData = True # 全部のデータがVaildだった。
+    return okData
+
+def ReadIssuerCsv(dir: Path) -> bool:
+    """
+    Issuer.csvを読み取りつつ検査する。検査結果はログと標準出力に書き出す。
+    """
+    # 全部のデータがValidだったら、Trueになるフラグ
+    okData: bool = False
+
+    okData = True # 全部のデータがVaildだった。
+    return okData
+
+def ControlCenter() -> None:
+    """
+    読み取り後のメイン処理
+    """
+    # 下記の3つの戻り値がTrueなら、先へ進む。でなかったら終了
+    bAssertions: bool = False
+    bBadgeClass: bool = False
+    bIssuer: bool = False
+
+    dir: Path = Path('tests')
+    bAssertions = ReadAssertionsCsv(dir)
+
+
+    if bAssertions and bBadgeClass and bIssuer :
+        # 3つのファイルは全部、正しい内容だった。
+        pass
+    else:
+        # 3つの入力ファイルのうち、どれか(全部も?)不正な値が
+        # 入っている
+        pass

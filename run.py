@@ -7,7 +7,7 @@
 """
 
 from BakeBadgeV2 import setup_logger
-
+from BakeBadgeV2 import ControlCenter
 
 
 
@@ -33,3 +33,7 @@ logger.error('logfile:moge')
 # _init_logger()
 # _logger = logging.getLogger('run.py')
 # _logger.info('python script started in %s', os.getcwd())
+
+ControlCenter()
+
+

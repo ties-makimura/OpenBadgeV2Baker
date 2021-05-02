@@ -99,9 +99,11 @@ class TestValidation(unittest.TestCase):
 
 class TestMock(unittest.TestCase):
     """
+    モックのテストを書く
     """
     def test_hoge(self):
         """
+        テスト用モック
         """
         m = unittest.mock.MagicMock()
 
