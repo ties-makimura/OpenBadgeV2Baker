@@ -84,6 +84,47 @@ class TestValidation(unittest.TestCase):
             with self.subTest(url=url, result=result):
                 self.assertEqual(BakeBadgeV2.CheckHTTPUrl(url), result)
 
+    def test_Issued_On(self):
+        """
+        issuedOnの発行日は、ISO8601の形式に従う
+        """
+        test_patterns = [
+            ("20210503T210215", False),
+            ("20210403210215", False),
+            ("2021-05-03 21:02:15", False),
+            ("2021-05-03T21:02:15Z", True),
+            ("2021-05-03T21:02:15", True),
+            ("2021-05-03T21:02:15+00:00", True),
+            ("2021-05-03T21:02:15-01:00", True),
+            ("2021-05-03T21:02:15-09:00", True),
+            ("2021-32-03T21:02:15", False)
+        ]
+        for str_val, result in test_patterns:
+            with self.subTest(str_val=str_val, result=result):
+                self.assertEqual(BakeBadgeV2.CheckIssuedOn(str_val), result)
+
+    def testExpires(self):
+        """
+        空白の場合を含めてテストする
+        """
+        test_patterns = [
+            ("", True),
+            ('', True),
+            ("20210503T210215", False),
+            ("20210403210215", False),
+            ("2021-05-03 21:02:15", False),
+            ("2021-05-03T21:02:15Z", True),
+            ("2021-05-03T21:02:15", True),
+            ("2021-05-03T21:02:15+00:00", True),
+            ("2021-05-03T21:02:15-01:00", True),
+            ("2021-05-03T21:02:15-09:00", True),
+            ("2021-32-03T21:02:15", False)
+        ]
+        for str_val, result in test_patterns:
+            with self.subTest(str_val=str_val, result=result):
+                self.assertEqual(BakeBadgeV2.CheckExpires(str_val), result)
+
+
     def test_csv_file(self):
         """
         csvファイルに関するテストパターン

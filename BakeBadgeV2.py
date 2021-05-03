@@ -8,6 +8,9 @@
 - ロギング
 - CSV読み取り
 - 読み取ったデータの Validate 機能
+    - チェック対象は、
+    Open Badges v2.0 https://www.imsglobal.org/sites/default/files/Badges/OBv2p0Final/index.html
+    を確認すること。
     - 入っているべき固定値のチェック
     - URLのチェック
     - emailのチェック
@@ -146,8 +149,8 @@ def CheckRecipientHashed(param: str) -> bool:
 
 def CheckRecipientSalt(salt: str) -> bool:
     """
-    saltの形式をチェックする。
-    32桁の英数
+    saltの形式をチェックする。定義ではtextとのみ規定している。
+    32桁の英数とする。
     """
     # regex = r'^[a-fA-F0-9]{32}(:.+)?$'
     regex = r"^[A-Z0-9]{32}(:.+)?$"
@@ -166,7 +169,7 @@ def CheckTypeHosted(typ: str) -> bool:
     else:
         return False
 
-def CheckHTTPUrl(url:str) -> bool:
+def CheckHTTPUrl(url: str) -> bool:
     """
     URLのチェックをする
     """
@@ -175,6 +178,37 @@ def CheckHTTPUrl(url:str) -> bool:
         return True
     else:
         return False
+
+def CheckIssuedOn(str_val: str) -> bool:
+    """
+    Badgeの発行日を設定する。ISO8601の形式に従う。
+    ただし、
+    YYYY-MM-DDTHH:MM:SSZ
+    YYYY-MM-DDTHH:MM:SS+HH:MM
+    YYYY-MM-DDTHH:MM:SS-HH:MM
+    Open Badges v2.0 https://www.imsglobal.org/sites/default/files/Badges/OBv2p0Final/index.html#dateTime
+    によると、timezone付きの形式を要求している。必須ではないけども。あと、UTCの時間にすることを勧めている
+    そのため、ローカルタイムはタイムゾーン付きが望ましいといえる。
+    """
+    regex = r'^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\.[0-9]+)?(Z|[+-](?:2[0-3]|[01][0-9]):[0-5][0-9])?$'
+    match_iso8601 = re.compile(regex).match
+    try:            
+        if match_iso8601( str_val ) is not None:
+            return True
+    except:
+        pass
+    return False
+
+def CheckExpires(str_val: str) -> bool:
+    """
+    Expiresは必須項目ではない。
+    なにも入っていない。または、ISO8601の形式が入っている。
+    """
+    if len(str_val) == 0:
+        # 文字サイズ==0 つまり、なにも入っていないか?
+        return True
+    
+    return CheckIssuedOn(str_val)
 
 def CheckCSVFileNames(pdir: Path) -> bool:
     """
@@ -312,9 +346,28 @@ def CheckAssersionsData(row, line:int) -> bool:
     #
     # issueOn
     #
-    
+    if CheckIssuedOn(row[9]):
+        formatted = f'"{row[9]}" - {line}行目のissuedOnは、iso8601形式です。'
+        logger.info(formatted)
+        bErrorHappend[9] = False
+    else:
+        formatted = f'"{row[9]}" - {line}行目のissuedOnは、YYYY-MM-DDTHH:MM:SS+00:00のiso8601形式ではありません。'
+        logger.error(formatted)
+        bErrorHappend[9] = True
     #
     # Expires
+    #
+    # Expires は、必須項目ではない。ので、空白なら作らない。
+    if CheckExpires(row[10]):
+        formatted = f'"{row[10]}" - {line}行目のExpiresは、""またはiso8601形式です。'
+        logger.info(formatted)
+        bErrorHappend[10] = False
+    else:
+        formatted = f'"{row[10]}" - {line}行目のExpiresは、""またはiso8601形式ではありません。'
+        logger.error(formatted)
+        bErrorHappend[10] = True
+    #
+    #
     #
     if any(bErrorHappend):
         # どれかがエラー起きた。
