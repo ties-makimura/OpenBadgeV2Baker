@@ -69,6 +69,48 @@ class TestValidation(unittest.TestCase):
             with self.subTest(context=context, result=result):
                 self.assertEqual(BakeBadgeV2.CheckContext(context), result)
 
+    def testTypeAssertion(self):
+        """
+        typeが、Assertionかを判定する
+        """
+        test_patterns = [
+            ("Assertion", True),
+            ("Assertions", False),
+            ("hoge", False)
+        ]
+        for typ, result in test_patterns:
+            with self.subTest(typ=typ, result=result):
+                self.assertEqual(BakeBadgeV2.CheckTypeAssertion(typ), result)
+    
+    def testTypeBadgeClass(self):
+        """
+        typeが、BadgeClassかを判定する
+        """
+        test_patterns = [
+            ("BadgeClass", True),
+            ("badgeClass", False),
+            ("Badgeclass", False),
+            ("badge", False)
+        ]
+        for typ, result in test_patterns:
+            with self.subTest(typ=typ, result=result):
+                self.assertEqual(BakeBadgeV2.CheckTypeBadgeClass(typ), result)
+
+    def testTypeIsser(self):
+        """
+        typeがIssuerかのユニットテスト
+        """
+        test_patterns = [
+            ("Issuer", True),
+            ("issuer", False),
+            ("Issuers", False),
+            ("Isser", False),
+            ("isser", False)
+        ]
+        for typ, result in test_patterns:
+            with self.subTest(typ=typ, result=result):
+                self.assertEqual(BakeBadgeV2.CheckTypeIssuer(typ), result)
+
     def test_HTTP_url(self):
         """
         http(s)から始まるURLをテストするパターン
@@ -124,6 +166,56 @@ class TestValidation(unittest.TestCase):
             with self.subTest(str_val=str_val, result=result):
                 self.assertEqual(BakeBadgeV2.CheckExpires(str_val), result)
 
+    def testCompareDateTime(self):
+        """
+        CompareDateTimeのテストをする
+        """
+        test_patterns = [
+            ("2021-01-01T00:00:00+09:00", "2022-12-31T23:59:59+09:00", True),
+            ("2022-01-01T00:00:00+09:00", "2021-12-31T23:59:59+09:00", False)
+        ]
+        for first, second, result in test_patterns:
+            with self.subTest(first=first, second=second, result=result):
+                self.assertEqual(BakeBadgeV2.CheckDateTimeOrder(first, second), result)
+
+    def testCompareDateTimeWithException(self):
+        """
+        CompareDateTime の例外発生テスト
+        """
+        with self.assertRaises(TypeError) as cdtwe:
+            ret = BakeBadgeV2.CheckDateTimeOrder("","")
+        
+        self.assertEqual(str(cdtwe.exception), str(TypeError("expiresが\"\"です。")))
+
+    def testCheckBadgeImage(self):
+        """
+        CheckBadgeImageのテスト
+        """
+        test_patterns = [
+            ("https://example.org/robotics-badge.png", True),
+            ("https://example.org/robotics-badge.PNG", True),
+            ("https://example.org/robotics-badge.SVG", True),
+            ("https://www.gongova.org/badges/gongovaP2020.png", True),
+            ("https://www.gongova.org/badges/gongovaP2020.svg", True),
+            ("https://example.org/robotics-badge.txt", False)
+        ]
+        for url, result in test_patterns:
+            with self.subTest(url=url, result=result):
+                self.assertEqual(BakeBadgeV2.CheckBadgeImage(url), result)
+
+    def testCheckBadgeIssuer(self):
+        """
+        BadgeClass での Issuer check
+        URLである。かつ末尾が、jsonである。
+        """
+        test_patterns = [
+            ("https://examples.org/issuer.json", True),
+            ("https://examples.org/issuer.JSON", True),
+            ("https://examples.org/issuer.txt", False)
+        ]
+        for url, result in test_patterns:
+            with self.subTest(url=url, result=result):
+                self.assertEqual(BakeBadgeV2.CheckBadgeIssuer(url), result)
 
     def test_csv_file(self):
         """
@@ -135,7 +227,7 @@ class TestValidation(unittest.TestCase):
         ]
         p = Path('tests')
         for p, result in test_patterns:
-            with self.subTest(p=p, result = result):
+            with self.subTest(p=p, result= result):
                 self.assertEqual(BakeBadgeV2.CheckCSVFileNames(p), result)
 
 class TestMock(unittest.TestCase):

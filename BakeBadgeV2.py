@@ -25,8 +25,12 @@ from logging import Logger
 import logging.handlers
 import typing
 
-# for email , csv
+# for check etc, email , csv
 import re
+
+# check for ISO8601
+import datetime
+import iso8601
 
 #
 # csv file related
@@ -121,11 +125,32 @@ def CheckTypeAssertion(typ: str) -> bool:
     """
     typeが"Assertion"かを判定する。
     """
-    regex = r'^Assertion'
+    regex = r'^Assertion$'
     if (re.search(regex, typ)):
         return True
     else:
         return False
+
+def CheckTypeBadgeClass(typ: str) -> bool:
+    """
+    typeが、"BadgeClass"かを判定する。
+    """
+    regex = r'^BadgeClass$'
+    if re.search(regex, typ):
+        return True
+    else:
+        return False
+
+def CheckTypeIssuer(typ: str) -> bool:
+    """
+    typeが、"Issuer"かを判定する
+    """
+    regex = r'^Issuer$'
+    if re.search(regex, typ):
+        return True
+    else:
+        return False
+
 
 def CheckRecipientType(typ: str) -> bool:
     """
@@ -210,6 +235,86 @@ def CheckExpires(str_val: str) -> bool:
     
     return CheckIssuedOn(str_val)
 
+def CheckDateTimeOrder(issuedOn: str, expires: str) -> bool:
+    """
+    strで受けた文字列をdatetimeに変換して、
+    issuedOn < expires を確認する。そうならTrue, 
+    そうでないなら、False
+
+    expires は、有効な日付が入っていること具体的には
+    ””でないこと。そうでなかったら例外を上げる。
+    """
+    if len(expires) == 0:
+        raise TypeError("expiresが\"\"です。")
+
+    first = iso8601.parse_date(issuedOn)
+    second = iso8601.parse_date(expires)
+    if first < second :
+        return True
+    else:
+        return False
+
+"""
+CheckAssertionsDataのテストケースを作ろう
+"""
+
+def CheckBadgeName(name: str) -> bool:
+    """
+    BadgeNameの検証を行う。
+    文字列長?
+    漢字ひらかな、かたかなのチェック?
+    いまは、とくに何もしない。hookのみ
+    """
+    return True
+
+def CheckBadgeDescription(desc: str) -> bool:
+    """
+    BadgeのDescriptionの検証を行う。
+    いまは、特に何もしない。
+    """
+    return True
+
+def CheckBadgeImage(url: str) -> bool:
+    """
+    url+最後の拡張子が、pngまたはsgvである。
+    """
+    regex = r'^.*\.(PNG|png|SVG|svg)$'
+    if CheckHTTPUrl(url):
+        # url checkは通った。
+        if re.search(regex, url):
+            return True
+        else:
+            return False
+    else:
+        return False
+
+def CheckBadgeCriteria(url: str) -> bool:
+    """
+    criteria は、url
+    """
+    return CheckHTTPUrl(url)
+
+def CheckBadgeIssuer(url: str) -> bool:
+    """
+    urlだが、最後は.jsonである。
+    """
+    regex = r'^.*\.(json|JSON)$'
+    if CheckHTTPUrl(url):
+        # url check は通った
+        if re.search(regex, url):
+            return True
+        else:
+            return False
+    else:
+        return False
+
+def CheckIssuerName(name: str) -> bool:
+    """
+    IssuerNameの検証を行う。
+    いまは特に何もしない。hookのみ
+    """
+    return True
+
 def CheckCSVFileNames(pdir: Path) -> bool:
     """
     pdir ディレクトリ
@@ -218,8 +323,6 @@ def CheckCSVFileNames(pdir: Path) -> bool:
     filelist = ['tests/Assertions.csv', 'tests/BadgeClass.csv', 'tests/Issuer.csv']
     if (pdir.is_dir):
         # pdirはディレクトリだ。
-        #pprint.pprint([p for p in pdir.iterdir()])
-        # pprint.pprint([p for p in pdir.iterdir() if re.search('\w+\.csv', str(p))])
         # dirにあるファイルを \w*\.csv で filter かけて、str にして、filelistと比較可能
         # にして l へ出力する。
         l = list([str(p) for p in pdir.iterdir() if re.search('\w*\.csv', str(p))])
@@ -229,14 +332,15 @@ def CheckCSVFileNames(pdir: Path) -> bool:
         print("l")
         pprint.pprint(l)
 
-        if (filelist == sorted(l)):
-            return True
+        # 3つのファイルがふくまれていればok
+        if l.count(filelist[0]) == 1 and l.count(filelist[1]) == 1 and l.count(filelist[2]) == 1:
+           return True
         else:
             return False
     else:
         raise ValueError('pdirはディレクトリではありません。')
 
-def CheckAssersionsData(row, line:int) -> bool:
+def CheckAssersionsData(row: typing.List[str], line: int) -> bool:
     """
     Assertions.csvの一行分のデータのチェックを行う。
     エラーなら、ロギングを行う。
@@ -344,7 +448,7 @@ def CheckAssersionsData(row, line:int) -> bool:
         logger.error(formatted)
         bErrorHappend[8] = True
     #
-    # issueOn
+    # issuedOn
     #
     if CheckIssuedOn(row[9]):
         formatted = f'"{row[9]}" - {line}行目のissuedOnは、iso8601形式です。'
@@ -369,6 +473,231 @@ def CheckAssersionsData(row, line:int) -> bool:
     #
     #
     #
+    # Expiresが""以外なら、issuedOnより後か?
+    if bErrorHappend[9] == False and bErrorHappend[10] == False:
+        # issuedOn と Expires は、意味のあるiso8601 形式かも
+        if len(row[10]) == 0:
+            # "" だった。
+            pass
+        else:
+            # なにか意味のある日付だ。
+            if CheckDateTimeOrder(row[9], row[10]):
+                pass
+            else:
+                formatted =f'"{row[9]} - {row[10]} - {line}行目の日付の関係が逆です。'
+                logger.error(formatted)
+                return False
+    #
+    #
+    #
+    if any(bErrorHappend):
+        # どれかがエラー起きた。
+        return False
+    else:
+        # エラーが起きなかった。
+        return True
+
+def CheckBadgeClassData(row:typing.List[str], line:int) -> bool:
+    """
+    BadgeClass.csvの一行分のデータチェックを行う。
+    エラーならロギングを行う。
+    """
+    #                                   0     1     2     3     4     5     6     7
+    bErrorHappend: typing.List[bool] = [True, True, True, True, True, True, True, True]
+
+    # 0. @context
+    # 1. id
+    # 2. type
+    # 3. name
+    # 4. description
+    # 5. image
+    # 6. criteria
+    # 7. issuer
+
+    #
+    # @context
+    #
+    if CheckContext(row[0]):
+        formatted = f'{line}行目の@contextは合っています。'
+        logger.info(formatted)
+        bErrorHappend[0] = False
+        pass
+    else:
+        formatted = f'{line}行目の@contextが間違っています。'
+        logger.error(formatted)
+        bErrorHappend[0] = True
+    #
+    # id
+    #
+    if CheckHTTPUrl(row[1]):
+        formatted = f'{line}行目のidはURLです。'
+        logger.info(formatted)
+        bErrorHappend[1] = False
+    else:
+        formatted = f'{line}行目のidはURLではありません。'
+        logger.error(formatted)
+        bErrorHappend[1] = True
+    #
+    # type
+    #
+    if CheckTypeBadgeClass(row[2]):
+        formatted = f'{line}行目のtypeがBadgeClassです。'
+        logger.info(formatted)
+        bErrorHappend[2] = False
+    else:
+        formatted = f'{line}行目のtypeがBadgeClassではありません。'
+        logger.error(formatted)
+        bErrorHappend[2] = True
+    #
+    # name
+    #
+    if CheckBadgeName(row[3]):
+        formatted = f'"{row[3]}" - {line}行目のname'
+        logger.info(formatted)
+        bErrorHappend[3] = False
+    else:
+        formatted = f'"{row[3]}" - {line}行目のnameは不正です。'
+        logger.error(formatted)
+        bErrorHappend[3] = True
+    #
+    # description
+    #
+    if CheckBadgeDescription(row[4]):
+        formatted = f'"{row[4]}" - {line}行目のdescription'
+        logger.info(formatted)
+        bErrorHappend[4] = False
+    else:
+        formatted = f'"{row[4]}" - {line}行目のdescriptionが不正です。'
+        logger.error(formatted)
+        bErrorHappend[4] = True
+    #
+    # image
+    #
+    if CheckBadgeImage(row[5]):
+        formatted = f'"{row[5]}" - {line}行目のBadgeImageはpngまたはsvgです。'
+        logger.info(formatted)
+        bErrorHappend[5] = False
+    else:
+        formatted = f'"{row[5]}" - {line}行目のBadgeImageはpngまたはsvgではありません。'
+        logger.error(formatted)
+        bErrorHappend[5] = True
+    #
+    # criteria
+    #
+    # 本来 criteria は違う構造も許すが今回の仕様だとURLを記するのでこれでよい
+    if CheckBadgeCriteria(row[6]):
+        formatted = f'"{row[6]}" - {line}行目は正しい形式です。'
+        logger.info(formatted)
+        bErrorHappend[6] = False
+    else:
+        formatted = f'"{row[6]}" - {line}行目は正しい形式ではありません。'
+        logger.error(formatted)
+        bErrorHappend[6] = True
+    #
+    # issuer
+    #
+    if CheckBadgeIssuer(row[7]):
+        formatted = f'"{row[7]}" - {line}行目は正しい形式です。'
+        logger.info(formatted)
+        bErrorHappend[7] = False
+    else:
+        formatted = f'"{row[7]}" - {line}行目は正しい形式ではありません。'
+        logger.error(formatted)
+        bErrorHappend[7] = True
+    #
+    #
+    #
+    if any(bErrorHappend):
+        # どれかでエラーが起きた。
+        return False
+    else:
+        # エラーは起きなかった。
+        return True
+
+def CheckIssuerData(row:typing.List[str], line:int) -> bool:
+    """
+    Issuer.csvの一行分のデータチェックを行う。
+    エラーなら、ロギングを行う。
+    """
+    #                                   0     1     2     3     4     5
+    bErrorHappend: typing.List[bool] = [True, True, True, True, True, True]
+
+    # 0. @context
+    # 1. id
+    # 2. type
+    # 3. name
+    # 4. url
+    # 5. email
+
+    #
+    # @context
+    #
+    if CheckContext(row[0]):
+        formatted = f'"{row[0]}" - {line}行目は正しい形式です。'
+        logger.info(formatted)
+        bErrorHappend[0] = False
+    else:
+        formatted = f'"{row[0]}" - {line}行目は正しい形式ではありません。'
+        logger.error(formatted)
+        bErrorHappend[0] = True
+    #
+    # id
+    #
+    if CheckHTTPUrl(row[1]):
+        formatted = f'"{row[1]}" - {line}行目は正しい形式です。'
+        logger.info(formatted)
+        bErrorHappend[1] = False
+    else:
+        formatted = f'"{row[1]}" - {line}行目は正しい形式ではありません。'
+        logger.error(formatted)
+        bErrorHappend[1] = True
+    #
+    # type = Issuer
+    #
+    if CheckTypeIssuer(row[2]):
+        formatted = f'"{row[2]}" - {line}行目は正しい形式です。'
+        logger.info(formatted)
+        bErrorHappend[2] = False
+    else:
+        formatted = f'"{row[2]}" - {line}行目は正しい形式ではありません。'
+        logger.error(formatted)
+        bErrorHappend[2] = True
+    #
+    # Issuer name
+    #
+    if CheckIssuerName(row[3]):
+        formatted = f'"{row[3]}" - {line}行目は正しい形式です。'
+        logger.info(formatted)
+        bErrorHappend[3] = False
+    else:
+        formatted = f'"{row[3]}" - {line}行目は正しい形式ではありません。'
+        logger.error(formatted)
+        bErrorHappend[3] = True
+    #
+    # name(url)
+    #
+    if CheckHTTPUrl(row[4]):
+        formatted = f'"{row[4]}" - {line}行目は正しい形式です。'
+        logger.info(formatted)
+        bErrorHappend[4] = False
+    else:
+        formatted = f'"{row[4]}" - {line}行目は正しい形式ではありません。'
+        logger.error(formatted)
+        bErrorHappend[4] = True
+    #
+    # email
+    #
+    if CheckEmailFormat(row[5]):
+        formatted = f'"{row[5]}" - {line}行目は正しい形式です。'
+        logger.info(formatted)
+        bErrorHappend[5] = False
+    else:
+        formatted = f'"{row[5]}" - {line}行目は正しい形式ではありません。'
+        logger.error(formatted)
+        bErrorHappend[5] = True
+    #
+    #
+    #
     if any(bErrorHappend):
         # どれかがエラー起きた。
         return False
@@ -390,7 +719,9 @@ def ReadAssertionsCsv(dir: Path) -> bool:
     下記の項目について検査を行う。
     """
     # 全部のデータがValidだったら、Trueになるフラグ
-    okData: bool = False
+    # 初期値は、判定の都合上 Trueとする。一回でも False
+    # になったら、Falseのまま
+    okData: bool = True
 
     rpf: Path = dir / "Assertions.csv" # 相対パス付きのファイル名
     logger.info(rpf.__repr__)
@@ -416,11 +747,13 @@ def ReadAssertionsCsv(dir: Path) -> bool:
                 # 0 行めで、ヘッダーありなら、スキップする。
                 line = line + 1
                 continue
-            print(line, row)
-            CheckAssersionsData(row, line)
-            #print(', '.join(row))
+            rtn = CheckAssersionsData(row, line)
+            # rtn が一回でもFalseになったら、okDataはFalseになる
+            # okDataがFalseならupdateしない。ラッチ機構
+            if okData == True:
+                if rtn == False:
+                    okData = False
             line = line + 1
-    okData = True # 全部のデータがVaildだった。
     return okData
 
 def ReadBadgeClassCsv(dir: Path) -> bool:
@@ -428,9 +761,43 @@ def ReadBadgeClassCsv(dir: Path) -> bool:
     BadgeClass.csvを読み取りつつ検査する。検査結果はログと標準出力に書き出す。
     """
     # 全部のデータがValidだったら、Trueになるフラグ
-    okData: bool = False
+    # 初期値は、判定の都合上 Trueとする。一回でも False
+    # になったら、Falseのまま
+    okData: bool = True
 
-    okData = True # 全部のデータがVaildだった。
+    rpf: Path = dir / "BadgeClass.csv" # 相対パス付きのファイル名
+    logger.info(rpf.__repr__)
+    with open(rpf, newline='') as csvfile:
+        # 先読みしてどの、dialectかを判定する
+        dialect = csv.Sniffer().sniff(csvfile.read(1024))
+        # pprint.pprint(dialect)
+        # logger.info(dialect.__repr__)
+        csvfile.seek(0)
+        # headerあり?
+        # hasHeader = True : あり
+        # hasHeader = False: なし
+        hasHeader = csv.Sniffer().has_header(csvfile.read(1024))
+        if hasHeader:  # header行があるかどうか True/False
+            logger.info("%s has a header" % rpf)
+        else:
+            logger.error("BadgeClass.csvに、Headerがついていません。")
+        csvfile.seek(0)  # 先頭に戻る
+        
+        reader = csv.reader(csvfile, dialect)
+        line: int = 0
+        for row in reader:
+            if line == 0 and hasHeader:
+                # 0 行めで、ヘッダーありなら、スキップする。
+                line = line + 1
+                continue
+            rtn = CheckBadgeClassData(row, line)
+            # rtn が一回でもFalseになったら、okDataはFalseになる
+            # okDataがFalseならupdateしない。ラッチ機構
+            if okData == True:
+                if rtn == False:
+                    okData = False
+            line = line + 1
+
     return okData
 
 def ReadIssuerCsv(dir: Path) -> bool:
@@ -438,9 +805,40 @@ def ReadIssuerCsv(dir: Path) -> bool:
     Issuer.csvを読み取りつつ検査する。検査結果はログと標準出力に書き出す。
     """
     # 全部のデータがValidだったら、Trueになるフラグ
-    okData: bool = False
+    okData: bool = True
 
-    okData = True # 全部のデータがVaildだった。
+    rpf: Path = dir / "Issuer.csv" # 相対パス付きのファイル名
+    logger.info(rpf.__repr__)
+    with open(rpf, newline='') as csvfile:
+        # 先読みしてどの、dialectかを判定する
+        dialect = csv.Sniffer().sniff(csvfile.read(1024))
+        # pprint.pprint(dialect)
+        # logger.info(dialect.__repr__)
+        csvfile.seek(0)
+        # headerあり?
+        # hasHeader = True : あり
+        # hasHeader = False: なし
+        hasHeader = csv.Sniffer().has_header(csvfile.read(1024))
+        if hasHeader:  # header行があるかどうか True/False
+            logger.info("%s has a header" % rpf)
+        else:
+            logger.error("Issuer.csvに、Headerがついていません。")
+        csvfile.seek(0)  # 先頭に戻る
+        
+        reader = csv.reader(csvfile, dialect)
+        line: int = 0
+        for row in reader:
+            if line == 0 and hasHeader:
+                # 0 行めで、ヘッダーありなら、スキップする。
+                line = line + 1
+                continue
+            rtn = CheckIssuerData(row, line)
+            # rtn が一回でもFalseになったら、okDataはFalseになる
+            # okDataがFalseならupdateしない。ラッチ機構
+            if okData == True:
+                if rtn == False:
+                    okData = False
+            line = line + 1
     return okData
 
 def ControlCenter() -> None:
@@ -454,6 +852,8 @@ def ControlCenter() -> None:
 
     dir: Path = Path('tests')
     bAssertions = ReadAssertionsCsv(dir)
+    bBadgeClass = ReadBadgeClassCsv(dir)
+    bIssuer = ReadIssuerCsv(dir)
 
 
     if bAssertions and bBadgeClass and bIssuer :
