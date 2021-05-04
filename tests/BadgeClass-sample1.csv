@@ -1,3 +1,4 @@
 @context,id,type,name,description,image,criteria,issuer
+固定値,ユーザ入力,固定値,ユーザ入力,ユーザ入力,ユーザ入力,ユーザ入力,ユーザ入力
 https://w3id.org/openbadges/v2,https://example.org/robotics-badge.json,BadgeClass,"Awesome Robotics Badge","For doing awesome things with robots that people think is pretty great.",https://example.org/robotics-badge.png,https://example.org/robotics-badge.html,https://example.org/issuer.json
 https://w3id.org/openbadges/v2,https://gongova.org/badges/gongovaP2020.json,BadgeClass,"GONGOVA参加証　2020　チエンマイ","Certificate of Completion: GONGOVA 2020 in Chiang Mai https://www.gongova.org/badges/gongovaP2020.txt",https://www.gongova.org/badges/gongovaP2020.png,https://www.gongova.org/badges/gongovaP2020.txt,https://gongova.org/badges/issuer.json
