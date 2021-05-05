@@ -856,10 +856,12 @@ def ControlCenter() -> None:
     bIssuer = ScanIssuerCsv(dir)
 
 
-    if bAssertions and bBadgeClass and bIssuer :
+    if (bAssertions and bBadgeClass and bIssuer) :
         # 3つのファイルは全部、正しい内容だった。
+        logger.info("データの読み取りを始めます。")
         pass
     else:
         # 3つの入力ファイルのうち、どれか(全部も?)不正な値が
         # 入っている
+        logger.error("入力ファイルが正しくありません。ログを見て修正後に再実行してください。")
         pass
