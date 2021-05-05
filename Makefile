@@ -22,6 +22,7 @@ clean: ## Clean up mess
 	rm -rf __pycache__
 	rm -rf .mypy_cache
 	rm OpenBadgeBake.log
+	rm -rf data/*
 
 
 help: ## Print this help
