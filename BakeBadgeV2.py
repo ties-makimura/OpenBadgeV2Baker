@@ -713,7 +713,7 @@ def MockWillBeChange() -> typing.Tuple[str, str] :
     return ("aaa", "bbb")
 
 
-def ReadAssertionsCsv(dir: Path) -> bool:
+def ScanAssertionsCsv(dir: Path) -> bool:
     """
     Assertions.csvを読み取りつつ検査する。検査結果はログと標準出力に書き出す。
     下記の項目について検査を行う。
@@ -756,7 +756,7 @@ def ReadAssertionsCsv(dir: Path) -> bool:
             line = line + 1
     return okData
 
-def ReadBadgeClassCsv(dir: Path) -> bool:
+def ScanBadgeClassCsv(dir: Path) -> bool:
     """
     BadgeClass.csvを読み取りつつ検査する。検査結果はログと標準出力に書き出す。
     """
@@ -800,7 +800,7 @@ def ReadBadgeClassCsv(dir: Path) -> bool:
 
     return okData
 
-def ReadIssuerCsv(dir: Path) -> bool:
+def ScanIssuerCsv(dir: Path) -> bool:
     """
     Issuer.csvを読み取りつつ検査する。検査結果はログと標準出力に書き出す。
     """
@@ -851,9 +851,9 @@ def ControlCenter() -> None:
     bIssuer: bool = False
 
     dir: Path = Path('tests')
-    bAssertions = ReadAssertionsCsv(dir)
-    bBadgeClass = ReadBadgeClassCsv(dir)
-    bIssuer = ReadIssuerCsv(dir)
+    bAssertions = ScanAssertionsCsv(dir)
+    bBadgeClass = ScanBadgeClassCsv(dir)
+    bIssuer = ScanIssuerCsv(dir)
 
 
     if bAssertions and bBadgeClass and bIssuer :
