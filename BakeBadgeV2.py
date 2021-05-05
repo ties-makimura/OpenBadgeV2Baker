@@ -753,6 +753,7 @@ def ScanAssertionsCsv(dir: Path) -> bool:
             if okData == True:
                 if rtn == False:
                     okData = False
+            #
             line = line + 1
     return okData
 
@@ -796,6 +797,7 @@ def ScanBadgeClassCsv(dir: Path) -> bool:
             if okData == True:
                 if rtn == False:
                     okData = False
+            #
             line = line + 1
 
     return okData
@@ -838,8 +840,69 @@ def ScanIssuerCsv(dir: Path) -> bool:
             if okData == True:
                 if rtn == False:
                     okData = False
+            #
             line = line + 1
     return okData
+
+def MakeJsonFiles(readPath: Path, writePath: Path) -> bool:
+    """
+    Scan済みのCSVファイルを読み取って、Assertions.csvのファイル順に、
+    writePathのディレクトリに順番にディレクトリを掘ってJSONファイルを
+    書き出す。
+    """
+    AssertionsFile: Path = readPath / "Assertions.csv"
+    BadgeClassFile: Path = readPath / "BadgeClass.csv"
+    IssuerFile: Path = readPath / "Issuer.csv"
+
+    # 以下、上記のファイル順でjsonファイルを作成していく。
+    # writePath を起点にして AssertionsFile の中身をnumbering
+    # されたディレクトリにAssertion.jsonを書き出す。
+    #
+    print("\n") # 改行
+    logger.info(AssertionsFile.__repr__())
+    with open(AssertionsFile, newline='') as assertionsCsvFile:
+        dialect = csv.Sniffer().sniff(assertionsCsvFile.read(1024))
+        # logger.info(dialect.__repr__)
+        assertionsCsvFile.seek(0)
+        # headerあり?
+        # hasHeader = True : あり
+        # hasHeader = False: なし
+        hasHeader = csv.Sniffer().has_header(assertionsCsvFile.read(1024))
+        if hasHeader:  # header行があるかどうか True/False
+            logger.info("%s has a header" % AssertionsFile)
+        else:
+            logger.error("Assertions.csvに、Headerがついていません。")
+        assertionsCsvFile.seek(0)  # 先頭に戻る
+        
+        reader = csv.reader(assertionsCsvFile, dialect)
+        line: int = 0
+        for row in reader:
+            if line == 0 and hasHeader:
+                # 0 行めで、ヘッダーありなら、スキップする。
+                line = line + 1
+                continue
+            # directory の作成
+            # 存在している?
+            d = writePath / Path(str(line))
+            if d.exists():
+                raise(FileExistsError("ディレクトリが存在します。処理を中断します。"))
+            # filesystem の関係でかけないことは考慮しない。
+            # データの最大行でチェックすべき
+            pprint.pprint(d)
+            pprint.pprint(d.exists())
+            d.mkdir() # ディレクトリ作成
+            pprint.pprint(d)
+            pprint.pprint(d.exists())
+            #
+            #---------------------------------
+            line = line + 1
+
+    #
+    #
+    #
+    return True
+
+
 
 def ControlCenter() -> None:
     """
@@ -850,18 +913,20 @@ def ControlCenter() -> None:
     bBadgeClass: bool = False
     bIssuer: bool = False
 
-    dir: Path = Path('tests')
-    bAssertions = ScanAssertionsCsv(dir)
-    bBadgeClass = ScanBadgeClassCsv(dir)
-    bIssuer = ScanIssuerCsv(dir)
+    idir: Path = Path('tests') # input directory
+    odir: Path = Path("data") # output directory
 
+    bAssertions = ScanAssertionsCsv(idir)
+    bBadgeClass = ScanBadgeClassCsv(idir)
+    bIssuer = ScanIssuerCsv(idir)
 
     if (bAssertions and bBadgeClass and bIssuer) :
         # 3つのファイルは全部、正しい内容だった。
         logger.info("データの読み取りを始めます。")
-        pass
+        # Scan済みのデータなので、受け入れ可能だと「わかっている」
+        MakeJsonFiles(idir, odir)
     else:
         # 3つの入力ファイルのうち、どれか(全部も?)不正な値が
         # 入っている
-        logger.error("入力ファイルが正しくありません。ログを見て修正後に再実行してください。")
-        pass
+        logger.error("入力ファイルが正しくありません。ログを見てCSVファイルを修正した後に再実行してください。")
+        # このまま終了する。

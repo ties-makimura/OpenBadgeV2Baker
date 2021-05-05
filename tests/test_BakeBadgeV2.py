@@ -2,6 +2,7 @@
 
 import unittest
 import unittest.mock
+from unittest.mock import patch
 
 # sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -11,6 +12,8 @@ from pathlib import Path
 import BakeBadgeV2
 #
 import pprint
+# for csv
+import io
 
 
 class TestValidation(unittest.TestCase):
@@ -260,3 +263,16 @@ class TestMock(unittest.TestCase):
 
         # 例外が想定通りであることを確認
         self.assertEqual(str(cm.exception), str(OSError("dummy_error")))
+
+    def test_MakeJsonFiles(self):
+        """
+        MakeJsonFilesをモックを使ってテストする
+        """
+
+        in_mem_csv = io.StringIO("""\
+        context, id, type, recipient:type, recipient:hashed, recipient:salt, recipient:identiity, badge, verification:type, issuedOn, Expires
+        https://w3id.org/openbadges/v2,https://gongova.org/badges/member001gongovaP2020.json,Assertion,email,True,Y4MJO3ZTTYHZTU6YLJKIYOFTHZPINXUV,sha256$9b2b7d2c5c82ec6862e7d57d150b9b57165571fe1abe12c773828368f772efa3,https://gongova.org/badges/gongovaP2020.json,hosted,2021-03-31T23:59:59+00:00,
+        https://w3id.org/openbadges/v2,https://gongova.org/badges/member001gongovaP2020.json,Assertion,email,True,Y4MJO3ZTTYHZTU6YLJKIYOFTHZPINXUZ,sha256$9b2b7d2c5c82ec6862e7d57d150b9b57165571fe1abe12b773828368f772efa3,https://gongova.org/badges/gongovaP2020.json,hosted,2021-04-30T23:59:59+00:00,""")
+        # tests ディレクトリにいるので data せよ。
+        with patch.object(BakeBadgeV2.MakeJsonFiles.AssertionsFile, in_mem_csv, autospec=True):
+            self.assertEqual(BakeBadgeV2.MakeJsonFiles(Path("tests"), Path("data")), True)
