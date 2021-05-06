@@ -237,6 +237,23 @@ class TestMock(unittest.TestCase):
     """
     モックのテストを書く
     """
+    def setUp(self):
+        p = Path("data")
+        print("\n")
+        print("setup mock\n")
+        [pprint.pprint(fl) for fl in p.iterdir()]
+        # setup はテスト毎に実行されるので下記が毎回実行
+        # され、directory が clean upされる
+        # import shutil して rmtree(fl) するかは要検討
+        [fl.rmdir() for fl in p.iterdir() if fl.is_dir]
+
+    def testGetAssertionFileName(self):
+        """
+        ファイル読み取りPathを返す。
+        mockで io.StringIO に置き換えるように外部関数化した。
+        """
+        self.assertEqual(BakeBadgeV2.GetAssertionFileName(Path("tests")), "tests/Assertions.csv")            
+
     def test_hoge(self):
         """
         テスト用モック
@@ -273,6 +290,13 @@ class TestMock(unittest.TestCase):
         context, id, type, recipient:type, recipient:hashed, recipient:salt, recipient:identiity, badge, verification:type, issuedOn, Expires
         https://w3id.org/openbadges/v2,https://gongova.org/badges/member001gongovaP2020.json,Assertion,email,True,Y4MJO3ZTTYHZTU6YLJKIYOFTHZPINXUV,sha256$9b2b7d2c5c82ec6862e7d57d150b9b57165571fe1abe12c773828368f772efa3,https://gongova.org/badges/gongovaP2020.json,hosted,2021-03-31T23:59:59+00:00,
         https://w3id.org/openbadges/v2,https://gongova.org/badges/member001gongovaP2020.json,Assertion,email,True,Y4MJO3ZTTYHZTU6YLJKIYOFTHZPINXUZ,sha256$9b2b7d2c5c82ec6862e7d57d150b9b57165571fe1abe12b773828368f772efa3,https://gongova.org/badges/gongovaP2020.json,hosted,2021-04-30T23:59:59+00:00,""")
-        # tests ディレクトリにいるので data せよ。
-        with patch.object(BakeBadgeV2.MakeJsonFiles.AssertionsFile, in_mem_csv, autospec=True):
-            self.assertEqual(BakeBadgeV2.MakeJsonFiles(Path("tests"), Path("data")), True)
+        # # tests ディレクトリにいるので data せよ。
+        # with patch.object(BakeBadgeV2.MakeJsonFiles.AssertionsFile, in_mem_csv, autospec=True):
+        #     self.assertEqual(BakeBadgeV2.MakeJsonFiles(Path("tests"), Path("data")), True)
+
+        # m = unittest.mock(spec=Path)
+        # m.return_value = in_mem_csv
+
+
+        self.assertEqual(BakeBadgeV2.MakeJsonFiles(Path("tests"), Path("data")), True)
+

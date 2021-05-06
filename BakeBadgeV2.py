@@ -38,7 +38,8 @@ import iso8601
 from pathlib import Path
 import csv
 import pprint
-
+#
+import json
 
 def setup_logger(name, logfile = 'OpenBadgeBake.log') -> Logger:
     """
@@ -844,20 +845,23 @@ def ScanIssuerCsv(dir: Path) -> bool:
             line = line + 1
     return okData
 
-def MakeJsonFiles(readPath: Path, writePath: Path) -> bool:
+def GetAssertionFileName(readPath: Path) -> str:
     """
-    Scan済みのCSVファイルを読み取って、Assertions.csvのファイル順に、
-    writePathのディレクトリに順番にディレクトリを掘ってJSONファイルを
-    書き出す。
+    assersions.csvへのパスとファイル名を返す。
+    unittest.mockでテストしやすいように分割した。
     """
-    AssertionsFile: Path = readPath / "Assertions.csv"
-    BadgeClassFile: Path = readPath / "BadgeClass.csv"
-    IssuerFile: Path = readPath / "Issuer.csv"
+    return str(readPath / "Assertions.csv")
 
-    # 以下、上記のファイル順でjsonファイルを作成していく。
-    # writePath を起点にして AssertionsFile の中身をnumbering
-    # されたディレクトリにAssertion.jsonを書き出す。
-    #
+def AssembleAssertionData(row: typing.List[str]) -> typing.Dict:
+    d: typing.Dict = dict()
+    return d
+
+def MakeAssersionJsonFiles(readPath: Path, writePath: Path) -> bool:
+    """
+    読み取ったデータから、Assertion.json を作成する
+    """
+    AssertionsFile: str = GetAssertionFileName(readPath)
+
     print("\n") # 改行
     logger.info(AssertionsFile.__repr__())
     with open(AssertionsFile, newline='') as assertionsCsvFile:
@@ -897,6 +901,26 @@ def MakeJsonFiles(readPath: Path, writePath: Path) -> bool:
             #---------------------------------
             line = line + 1
 
+    return True
+
+
+def MakeJsonFiles(readPath: Path, writePath: Path) -> bool:
+    """
+    Scan済みのCSVファイルを読み取って、Assertions.csvのファイル順に、
+    writePathのディレクトリに順番にディレクトリを掘ってJSONファイルを
+    書き出す。
+    """
+
+    BadgeClassFile: Path = readPath / "BadgeClass.csv"
+    IssuerFile: Path = readPath / "Issuer.csv"
+
+    # 以下、上記のファイル順でjsonファイルを作成していく。
+    # writePath を起点にして AssertionsFile の中身をnumbering
+    # されたディレクトリにAssertion.jsonを書き出す。
+    #
+
+    rtn1 = MakeAssersionJsonFiles(readPath, writePath)
+
     #
     #
     #
@@ -924,7 +948,8 @@ def ControlCenter() -> None:
         # 3つのファイルは全部、正しい内容だった。
         logger.info("データの読み取りを始めます。")
         # Scan済みのデータなので、受け入れ可能だと「わかっている」
-        MakeJsonFiles(idir, odir)
+        MakeAssersionJsonFiles(idir, odir)
+
     else:
         # 3つの入力ファイルのうち、どれか(全部も?)不正な値が
         # 入っている
