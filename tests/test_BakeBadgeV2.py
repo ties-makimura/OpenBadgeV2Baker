@@ -15,6 +15,9 @@ import pprint
 # for csv
 import io
 
+# for remove directories.
+import shutil
+import filecmp #jsonファイルの比較のため
 
 class TestValidation(unittest.TestCase):
     """
@@ -220,6 +223,86 @@ class TestValidation(unittest.TestCase):
             with self.subTest(url=url, result=result):
                 self.assertEqual(BakeBadgeV2.CheckBadgeIssuer(url), result)
 
+#     def testAssembleAssertionData(self):
+#         """
+#         AssembleAssertionDataをテストする。
+#         """
+#         # 0. @context
+#         # 1. id
+#         # 2. type
+#         # 3. recipient:type
+#         # 4. recipient:hashed
+#         # 5. recipient:salt
+#         # 6. recipient:identity
+#         # 7. badge
+#         # 8. verification:type
+#         # 9. issuedOn
+#         # 10. expires
+#         row: typing.List[str] = [
+#             "https://w3id.org/openbadges/v2",
+#             "https://example.org/beths-robotics-badge.json",
+#             "Assertion",
+#             "email",
+#             "True",
+#             "Y4MJO3ZTTYHZTU6YLJKIYOFTHZPINXUV",
+#             "sha256$9b2b7d2c5c82ec6862e7d57d150b9b57165571fe1abe12c773828368f772efa3",
+#             "https://gongova.org/badges/gongovaP2020.json",
+#             "hosted",
+#             "2021-03-31T23:59:59+00:00",
+#             ""
+#         ]
+#         d: typingDict = dict()
+#         d["@context"] = row[0]
+#         d["id"] = row[1]
+#         d["type"] = row[2]
+#         d["recipient"] = {
+#             "type": row[3],
+#             "hashed": row[4],
+#             "salt": row[5],
+#             "identify": row[6]
+#         }
+#         d["badge"] = row[7]
+#         d["verification"] = {
+#             "type": row[8]
+#         }
+#         d["issuedOn"] = row[9]
+#         d["expires"] = row[10]
+
+#         BakeBadgeV2.AssembleAssertionData(row)
+
+#         text1: io.StringIO() = '''{
+#   "@context": "https://w3id.org/openbadges/v2",
+#   "type": "Assertion",
+#   "id": "https://example.org/beths-robotics-badge.json",
+#   "recipient": {
+#     "type": "email",
+#     "hashed": "True",
+#     "salt": "Y4MJO3ZTTYHZTU6YLJKIYOFTHZPINXUV",
+#     "identity": "sha256$9b2b7d2c5c82ec6862e7d57d150b9b57165571fe1abe12c773828368f772efa3"
+#   },
+#   "badge": "https://gongova.org/badges/gongovaP2020.json",
+#   "verification": {
+#     "type": "hosted"
+#   },
+#   "issuedOn": "2021-03-31T23:59:59+00:00"
+# }'''
+
+    def testMakeAssertionJsonFiles(self):
+        """
+        MakeAssertionJsonFilesのテスト
+        """
+        try:
+            if BakeBadgeV2.MakeAssersionJsonFiles(Path("tests"), Path("data")):
+                if Path("data/1").exists():
+                    self.assertEqual(filecmp.cmp(Path("data/1/Assertion.json"), Path("tests/1/Assertion.json"), shallow=False), True)
+                else:
+                    print("Need to execute AssembleAssertionData\n")
+            else:
+                print("fail: MakeAssertionJsonFiles\n")
+        finally:
+            [shutil.rmtree(fl) for fl in Path("data").iterdir()] # 一時データを消去する
+            pass
+
     def test_csv_file(self):
         """
         csvファイルに関するテストパターン
@@ -237,15 +320,17 @@ class TestMock(unittest.TestCase):
     """
     モックのテストを書く
     """
-    def setUp(self):
-        p = Path("data")
-        print("\n")
-        print("setup mock\n")
-        [pprint.pprint(fl) for fl in p.iterdir()]
+    # def setUp(self):
+        # p = Path("data")
+        # print("\n")
+        # print("setup mock\n")
+        # [pprint.pprint(fl) for fl in p.iterdir()]
+
         # setup はテスト毎に実行されるので下記が毎回実行
         # され、directory が clean upされる
         # import shutil して rmtree(fl) するかは要検討
-        [fl.rmdir() for fl in p.iterdir() if fl.is_dir]
+        # [fl.rmdir() for fl in p.iterdir() if fl.is_dir]
+        # [shutil.rmtree(fl) for fl in p.iterdir() if fl.is_dir]
 
     def testGetAssertionFileName(self):
         """
@@ -264,8 +349,8 @@ class TestMock(unittest.TestCase):
         m.return_value = ('aaaa', 'bbbb')
         MockWillBeChange = m
         csv = MockWillBeChange()
-        print("csv")
-        pprint.pprint(csv)
+        # print("csv")
+        # pprint.pprint(csv)
 
         # 戻り値が正しいことのチェック(mockでわざと書き換えた値なので正しくはないのですが)
         self.assertEqual(csv, ('aaaa','bbbb'))
@@ -281,22 +366,22 @@ class TestMock(unittest.TestCase):
         # 例外が想定通りであることを確認
         self.assertEqual(str(cm.exception), str(OSError("dummy_error")))
 
-    def test_MakeJsonFiles(self):
-        """
-        MakeJsonFilesをモックを使ってテストする
-        """
+    # def test_MakeJsonFiles(self):
+    #     """
+    #     MakeJsonFilesをモックを使ってテストする
+    #     """
 
-        in_mem_csv = io.StringIO("""\
-        context, id, type, recipient:type, recipient:hashed, recipient:salt, recipient:identiity, badge, verification:type, issuedOn, Expires
-        https://w3id.org/openbadges/v2,https://gongova.org/badges/member001gongovaP2020.json,Assertion,email,True,Y4MJO3ZTTYHZTU6YLJKIYOFTHZPINXUV,sha256$9b2b7d2c5c82ec6862e7d57d150b9b57165571fe1abe12c773828368f772efa3,https://gongova.org/badges/gongovaP2020.json,hosted,2021-03-31T23:59:59+00:00,
-        https://w3id.org/openbadges/v2,https://gongova.org/badges/member001gongovaP2020.json,Assertion,email,True,Y4MJO3ZTTYHZTU6YLJKIYOFTHZPINXUZ,sha256$9b2b7d2c5c82ec6862e7d57d150b9b57165571fe1abe12b773828368f772efa3,https://gongova.org/badges/gongovaP2020.json,hosted,2021-04-30T23:59:59+00:00,""")
-        # # tests ディレクトリにいるので data せよ。
-        # with patch.object(BakeBadgeV2.MakeJsonFiles.AssertionsFile, in_mem_csv, autospec=True):
-        #     self.assertEqual(BakeBadgeV2.MakeJsonFiles(Path("tests"), Path("data")), True)
+    #     in_mem_csv = io.StringIO("""\
+    #     context, id, type, recipient:type, recipient:hashed, recipient:salt, recipient:identiity, badge, verification:type, issuedOn, Expires
+    #     https://w3id.org/openbadges/v2,https://gongova.org/badges/member001gongovaP2020.json,Assertion,email,True,Y4MJO3ZTTYHZTU6YLJKIYOFTHZPINXUV,sha256$9b2b7d2c5c82ec6862e7d57d150b9b57165571fe1abe12c773828368f772efa3,https://gongova.org/badges/gongovaP2020.json,hosted,2021-03-31T23:59:59+00:00,
+    #     https://w3id.org/openbadges/v2,https://gongova.org/badges/member001gongovaP2020.json,Assertion,email,True,Y4MJO3ZTTYHZTU6YLJKIYOFTHZPINXUZ,sha256$9b2b7d2c5c82ec6862e7d57d150b9b57165571fe1abe12b773828368f772efa3,https://gongova.org/badges/gongovaP2020.json,hosted,2021-04-30T23:59:59+00:00,""")
+    #     # # tests ディレクトリにいるので data せよ。
+    #     # with patch.object(BakeBadgeV2.MakeJsonFiles.AssertionsFile, in_mem_csv, autospec=True):
+    #     #     self.assertEqual(BakeBadgeV2.MakeJsonFiles(Path("tests"), Path("data")), True)
 
-        # m = unittest.mock(spec=Path)
-        # m.return_value = in_mem_csv
+    #     # m = unittest.mock(spec=Path)
+    #     # m.return_value = in_mem_csv
 
 
-        self.assertEqual(BakeBadgeV2.MakeJsonFiles(Path("tests"), Path("data")), True)
+    #     self.assertEqual(BakeBadgeV2.MakeJsonFiles(Path("tests"), Path("data")), True)
 

@@ -21,6 +21,7 @@
 """
 import sys
 import os
+import time
 from logging import Logger
 import logging.handlers
 import typing
@@ -328,10 +329,10 @@ def CheckCSVFileNames(pdir: Path) -> bool:
         # にして l へ出力する。
         l = list([str(p) for p in pdir.iterdir() if re.search('\w*\.csv', str(p))])
 
-        print("pdir:")
-        pprint.pprint(pdir)
-        print("l")
-        pprint.pprint(l)
+        # print("pdir:")
+        # pprint.pprint(pdir)
+        # print("l")
+        # pprint.pprint(l)
 
         # 3つのファイルがふくまれていればok
         if l.count(filelist[0]) == 1 and l.count(filelist[1]) == 1 and l.count(filelist[2]) == 1:
@@ -853,7 +854,53 @@ def GetAssertionFileName(readPath: Path) -> str:
     return str(readPath / "Assertions.csv")
 
 def AssembleAssertionData(row: typing.List[str]) -> typing.Dict:
+    """
+
+    output image
+    {
+        "@context": "https://w3id.org/openbadges/v2",
+        "type": "Assertion",
+        "id": "https://example.org/beths-robotics-badge.json",
+        "recipient": {
+            "type": "email",
+            "hashed": true,
+            "salt": "deadsea",
+            "identity": "sha256$c7ef86405ba71b85acd8e2e95166c4b111448089f2e1599f42fe1bba46e865c5"
+        },
+        "image": "https://example.org/beths-robot-badge.png",
+        "evidence": "https://example.org/beths-robot-work.html",
+        "issuedOn": "2016-12-31T23:59:59Z",
+        "expires": "2017-06-30T23:59:59Z",
+        "badge": "https://example.org/robotics-badge.json",
+        "verification": {
+            "type": "hosted"
+        }
+    }
+    """
     d: typing.Dict = dict()
+    d["@context"] = row[0]
+    d["type"] = row[2] # 必須項目
+    d["id"] = row[1] # 必須項目
+    # 必須項目
+    d["recipient"] = {
+        "type": row[3],
+        "hashed": row[4],
+        "salt": row[5],
+        "identity": row[6]
+    }
+    d["badge"] = row[7] # 必須項目
+    # 必須項目
+    d["verification"] = {
+        "type": row[8]
+    }
+    d["issuedOn"] = row[9] # 必須項目
+    if len(row[10]) != 0:
+        # 選択項目
+        d["expires"] = row[10]
+    # print("AssembleAssertionData\n")
+    # pprint.pprint(d)
+    # print("-----------------------------------\n")
+    # print(json.dumps(d, ensure_ascii=False, indent=2))
     return d
 
 def MakeAssersionJsonFiles(readPath: Path, writePath: Path) -> bool:
@@ -892,11 +939,25 @@ def MakeAssersionJsonFiles(readPath: Path, writePath: Path) -> bool:
                 raise(FileExistsError("ディレクトリが存在します。処理を中断します。"))
             # filesystem の関係でかけないことは考慮しない。
             # データの最大行でチェックすべき
-            pprint.pprint(d)
-            pprint.pprint(d.exists())
+            # pprint.pprint(d)
+            # pprint.pprint(d.exists())
             d.mkdir() # ディレクトリ作成
-            pprint.pprint(d)
-            pprint.pprint(d.exists())
+            # pprint.pprint(d)
+            # pprint.pprint(d.exists())
+            #------------------------------------------
+            jsonDict = AssembleAssertionData(row)
+            #------------------------------------------
+            # JSONファイル生成
+            wfp: Path = d / "Assertion.json"
+            print("wfp")
+            pprint.pprint(wfp)
+            with open(wfp, mode='wt', encoding='utf-8') as file:
+                json.dump(jsonDict, file, ensure_ascii=False, indent=2)
+            # while not Path(wfp).exists():
+            #     time.sleep(1)
+            # if Path("data/1/Assertion.json").exists():
+            #     print("data/1/Assertion.jsonは存在する")
+            # print(json.dumps(jsonDict, ensure_ascii=False, indent=2))
             #
             #---------------------------------
             line = line + 1
