@@ -1,4 +1,3 @@
 @context,id,type,name,url,email
-固定値,ユーザ入力,固定値,ユーザ入力,ユーザ入力,ユーザ入力
 https://w3id.org/openbadges/v2,https://example.org/issuer.json,Issuer,An Example Badge Issuer,https://example.org,contact@example.org
 https://w3id.org/openbadges/v2,https://gongova.org/badges/issuer.json,Issuer,特定非営利活動法人草の根国際協力研修プログラム（略称：GONGOVA） Grassroots Overseas Non-Governmental Organization (NGO) Volunteer Activity Programme (GONGOVA),https://www.gongova.org/,secretary@gongova.org
