@@ -303,6 +303,18 @@ class TestValidation(unittest.TestCase):
             [shutil.rmtree(fl) for fl in Path("data").iterdir()] # 一時データを消去する
             pass
 
+    def testMakeBadgeClassJsonFile(self):
+        """
+        MakeBadgeClassJsonFileのテスト
+        """
+        try:
+            if BakeBadgeV2.MakeBadgeClassJsonFile(Path("tests"), Path("data")):
+                self.assertEqual(filecmp.cmp(Path("data/BadgeClass.json"), Path("tests/BadgeClass.json"), shallow=False), True)
+            else:
+                print("fail: MakeBadgeClassJsonFiles\n")
+        finally:
+            Path("data/BadgeClass.json").unlink()
+
     def test_csv_file(self):
         """
         csvファイルに関するテストパターン
