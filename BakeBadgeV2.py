@@ -1004,7 +1004,7 @@ def AssembleBadgeClassData(row: typing.List[str]) -> typing.Dict:
     }
     """
     d: typing.Dict = dict()
-    # d["@context"] = row[0] # 規格にはないので、入れないことにする。
+    d["@context"] = row[0] # 規格にはないが例にはあるので入れる。
     d["id"] = row[1] # 必須項目
     d["type"] = row[2] # 必須項目
     d["name"] = row[3] # 必須項目
@@ -1024,7 +1024,7 @@ def MakeBadgeClassJsonFile(readPath: Path, writePath: Path) -> bool:
     logger.info(BadgeClassFile.__repr__())
     with open(BadgeClassFile, newline='') as badgeClassCsvFile:
         dialect = csv.Sniffer().sniff(badgeClassCsvFile.read(1024))
-        badgeClassCsvFile.seek(9)
+        badgeClassCsvFile.seek(0)
         hasHeader = csv.Sniffer().has_header(badgeClassCsvFile.read(1024))
         if hasHeader:
             logger.info("%s has a header" % BadgeClassFile)
@@ -1044,14 +1044,92 @@ def MakeBadgeClassJsonFile(readPath: Path, writePath: Path) -> bool:
                 # headerがない場合
                 jsonDict = AssembleBadgeClassData(row)
                 with open(wfp, mode='wt', encoding='utf-8') as file:
-                    json.dump(AssembleBadgeClassData(row), file, ensure_ascii=False, indent=2)
-                print(json.dumps(jsonDict, ensure_ascii=False, indent=2))
+                    json.dump(jsonDict, file, ensure_ascii=False, indent=2)
+                # print(json.dumps(jsonDict, ensure_ascii=False, indent=2))
             elif line == 1 and hasHeader:
                 # headerある場合
                 jsonDict = AssembleBadgeClassData(row)
                 with open(wfp, mode='wt', encoding='utf-8') as file:
                     json.dump(jsonDict, file, ensure_ascii=False, indent=2)
-                print(json.dumps(jsonDict, ensure_ascii=False, indent=2))
+                # print(json.dumps(jsonDict, ensure_ascii=False, indent=2))
+            else:
+                logger.info("余分なデータがあります。読み飛ばします。")
+            line = line + 1
+    return True
+
+def GetIssuerFileName(readPath: Path) -> Path:
+    """
+    Issuer.csvへのパスとファイル名を返す。
+    unittest.mockでテストしやすいように分割した。
+    """
+    return (readPath / "Issuer.csv")
+
+def AssembleIssuerData(row: typing.List[str]) -> typing.Dict:
+    """
+    入力文字列をdictに変換する。json出力用
+    下記は、Profileとあるが、Issuerと同じ。
+    Open Badges v2.0
+    https://www.imsglobal.org/sites/default/files/Badges/OBv2p0Final/index.html#Profile
+
+    {
+        "@context": "https://w3id.org/openbadges/v2",
+        "type": "Issuer",
+        "id": "https://example.org/organization.json",
+        "name": "An Example Badge Issuer",
+        "image": "https://example.org/logo.png",
+        "url": "https://example.org",
+        "email": "contact@example.org",
+        "publicKey": "https://example.org/publicKey.json",
+        "revocationList": "https://example.org/revocationList.json"
+    }
+    """
+    d: typing.Dict = dict()
+    d["@context"] = row[0] # 規格にないけど、例にはあるので入れる
+    d["id"] = row[1] # 必須項目
+    d["type"] = row[2] # 必須項目
+    d["name"] = row[3]
+    d["url"] = row[4]
+    d["email"] = row[5]
+    return d
+
+def MakeIssuerJsonFile(readPath: Path, writePath: Path) -> bool:
+    """
+    読み取ったデータから、Issuer.jsonを作成する。
+    """
+    IssuerFile: Path = GetIssuerFileName(readPath)
+
+    print("\n")
+    logger.info(IssuerFile.__repr__())
+    with open(IssuerFile, newline='') as issuerCsvFile:
+        dialect = csv.Sniffer().sniff(issuerCsvFile.read(1024))
+        issuerCsvFile.seek(0)
+        hasHeader = csv.Sniffer().has_header(issuerCsvFile.read(1024))
+        if hasHeader:
+            logger.info("%s has a header" % IssuerFile)
+        else:
+            logger.error("Issuer.csvにHeaderがついていません。")
+        issuerCsvFile.seek(0)
+
+        wfp = writePath / "Issuer.json"
+        reader = csv.reader(issuerCsvFile, dialect)
+        line: int = 0
+        for row in reader:
+            if line == 0 and hasHeader:
+                # 0行めで、ヘッダーありなら、スキップする
+                line = line + 1
+                continue
+            if line == 0 and not hasHeader:
+                # headerがない場合
+                jsonDict = AssembleIssuerData(row)
+                with open(wfp, mode='wt', encoding='utf-8') as file:
+                    json.dump(jsonDict, file, ensure_ascii=False, indent=2)
+                # print(json.dumps(jsonDict, ensure_ascii=False, indent=2))
+            elif line == 1 and hasHeader:
+                # headerがある場合
+                jsonDict = AssembleIssuerData(row)
+                with open(wfp, mode='wt', encoding='utf-8') as file:
+                    json.dump(jsonDict, file, ensure_ascii=False, indent=2)
+                # print(json.dumps(jsonDict, ensure_ascii=False, indent=2))
             else:
                 logger.info("余分なデータがあります。読み飛ばします。")
             line = line + 1
@@ -1102,6 +1180,9 @@ def ControlCenter() -> None:
         logger.info("データの読み取りを始めます。")
         # Scan済みのデータなので、受け入れ可能だと「わかっている」
         MakeAssersionJsonFiles(idir, odir)
+        MakeBadgeClassJsonFile(idir, odir)
+        MakeIssuerJsonFile(idir, odir)
+
 
     else:
         # 3つの入力ファイルのうち、どれか(全部も?)不正な値が

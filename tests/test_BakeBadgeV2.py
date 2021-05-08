@@ -300,6 +300,10 @@ class TestValidation(unittest.TestCase):
             else:
                 print("fail: MakeAssertionJsonFiles\n")
         finally:
+            if Path("data/Issuer.json").exists():
+                Path("data/Issuer.json").unlink()
+            if Path("data/BadgeClass.json").exists():
+                Path("data/BadgeClass.json").unlink()
             [shutil.rmtree(fl) for fl in Path("data").iterdir()] # 一時データを消去する
             pass
 
@@ -309,11 +313,27 @@ class TestValidation(unittest.TestCase):
         """
         try:
             if BakeBadgeV2.MakeBadgeClassJsonFile(Path("tests"), Path("data")):
-                self.assertEqual(filecmp.cmp(Path("data/BadgeClass.json"), Path("tests/BadgeClass.json"), shallow=False), True)
+                self.assertEqual(filecmp.cmp(Path("data/BadgeClass.json"),
+                    Path("tests/BadgeClass.json"), shallow=False), True)
             else:
-                print("fail: MakeBadgeClassJsonFiles\n")
+                print("fail: MakeBadgeClassJsonFile\n")
         finally:
-            Path("data/BadgeClass.json").unlink()
+            Path("data/BadgeClass.json").unlink() # clean up
+            pass
+
+    def testMakeIssuerJsonFile(self):
+        """
+        MakeIssuerJsonFileのテスト
+        """
+        try:
+            if BakeBadgeV2.MakeIssuerJsonFile(Path("tests"), Path("data")):
+                self.assertEqual(filecmp.cmp(Path("data/Issuer.json"), 
+                    Path("tests/Issuer.json"), shallow=False), True)
+            else:
+                print("Fail: MakeIssuerJsonFile\n")
+        finally:
+            Path("data/Issuer.json").unlink() # clean up
+            pass # if above line is commentted.
 
     def test_csv_file(self):
         """
@@ -347,9 +367,26 @@ class TestMock(unittest.TestCase):
     def testGetAssertionFileName(self):
         """
         ファイル読み取りPathを返す。
-        mockで io.StringIO に置き換えるように外部関数化した。
+        mockで io.StringIO に置き換える可能なテストにするべく外部関数化した。
         """
-        self.assertEqual(BakeBadgeV2.GetAssertionFileName(Path("tests")), Path("tests/Assertions.csv"))            
+        self.assertEqual(BakeBadgeV2.GetAssertionFileName(Path("tests")),
+            Path("tests/Assertions.csv"))            
+
+    def testGetBadgeClassFileName(self):
+        """
+        ファイル読み取りPathを返す。
+        mockで、io.StringIO に置き換え可能なテストにするべく外部関数化した。
+        """
+        self.assertEqual(BakeBadgeV2.GetBadgeClassFileName(Path("tests")),
+            Path("tests/BadgeClass.csv"))
+
+    def testGetIssuerFileName(self):
+        """
+        ファイル読み取りPathを返す。
+        mockで、io.StingIOに置き換え可能なテストにするべく外部関数化した。
+        """
+        self.assertEqual(BakeBadgeV2.GetIssuerFileName(Path("tests")),
+            Path("tests/Issuer.csv"))
 
     def test_hoge(self):
         """
