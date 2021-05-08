@@ -1004,7 +1004,7 @@ def AssembleBadgeClassData(row: typing.List[str]) -> typing.Dict:
     }
     """
     d: typing.Dict = dict()
-    d["@context"] = row[0] # ?
+    # d["@context"] = row[0] # 規格にはないので、入れないことにする。
     d["id"] = row[1] # 必須項目
     d["type"] = row[2] # 必須項目
     d["name"] = row[3] # 必須項目
