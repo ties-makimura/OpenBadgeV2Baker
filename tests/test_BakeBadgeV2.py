@@ -337,7 +337,7 @@ class TestMock(unittest.TestCase):
         ファイル読み取りPathを返す。
         mockで io.StringIO に置き換えるように外部関数化した。
         """
-        self.assertEqual(BakeBadgeV2.GetAssertionFileName(Path("tests")), "tests/Assertions.csv")            
+        self.assertEqual(BakeBadgeV2.GetAssertionFileName(Path("tests")), Path("tests/Assertions.csv"))            
 
     def test_hoge(self):
         """

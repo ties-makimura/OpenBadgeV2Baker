@@ -846,16 +846,9 @@ def ScanIssuerCsv(dir: Path) -> bool:
             line = line + 1
     return okData
 
-def GetAssertionFileName(readPath: Path) -> str:
-    """
-    assersions.csvへのパスとファイル名を返す。
-    unittest.mockでテストしやすいように分割した。
-    """
-    return str(readPath / "Assertions.csv")
-
 def AssembleAssertionData(row: typing.List[str]) -> typing.Dict:
     """
-
+    入力文字列をdictに変換する。json出力用
     output image
     {
         "@context": "https://w3id.org/openbadges/v2",
@@ -903,11 +896,20 @@ def AssembleAssertionData(row: typing.List[str]) -> typing.Dict:
     # print(json.dumps(d, ensure_ascii=False, indent=2))
     return d
 
+def GetAssertionFileName(readPath: Path) -> Path:
+    """
+    Assersions.csvへのパスとファイル名を返す。
+    unittest.mockでテストしやすいように分割した。
+    """
+    return (readPath / "Assertions.csv")
+
+
 def MakeAssersionJsonFiles(readPath: Path, writePath: Path) -> bool:
     """
-    読み取ったデータから、Assertion.json を作成する
+    読み取ったデータから、行ごとにディレクトリを掘って
+    Assertion.json を作成する。
     """
-    AssertionsFile: str = GetAssertionFileName(readPath)
+    AssertionsFile: Path = GetAssertionFileName(readPath)
 
     print("\n") # 改行
     logger.info(AssertionsFile.__repr__())
@@ -949,8 +951,8 @@ def MakeAssersionJsonFiles(readPath: Path, writePath: Path) -> bool:
             #------------------------------------------
             # JSONファイル生成
             wfp: Path = d / "Assertion.json"
-            print("wfp")
-            pprint.pprint(wfp)
+            # print("wfp")
+            # pprint.pprint(wfp)
             with open(wfp, mode='wt', encoding='utf-8') as file:
                 json.dump(jsonDict, file, ensure_ascii=False, indent=2)
             # while not Path(wfp).exists():
@@ -961,9 +963,99 @@ def MakeAssersionJsonFiles(readPath: Path, writePath: Path) -> bool:
             #
             #---------------------------------
             line = line + 1
-
     return True
 
+def GetBadgeClassFileName(readPath: Path) -> Path:
+    """
+    BadgeClass.csv へのパスとファイル名を返す。
+    unittest.mock でテストしやすいように分割した。
+    """
+    return (readPath / "BadgeClass.csv")
+
+def AssembleBadgeClassData(row: typing.List[str]) -> typing.Dict:
+    """
+    入力文字列をdictに変換する。json出力用
+    Open Badges Examples
+    https://www.imsglobal.org/sites/default/files/Badges/OBv2p0Final/examples/index.html#BadgeClass
+    {
+        "@context": "https://w3id.org/openbadges/v2",
+        "type": "BadgeClass",
+        "id": "https://example.org/robotics-badge.json",
+        "name": "Awesome Robotics Badge",
+        "description": "For doing awesome things with robots that people think is pretty great.",
+        "image": "https://example.org/robotics-badge.png",
+        "criteria": "https://example.org/robotics-badge.html",
+        "tags": ["robots", "awesome"],
+        "issuer": "https://example.org/organization.json",
+        "alignment": [
+            { "targetName": "CCSS.ELA-Literacy.RST.11-12.3",
+            "targetUrl": "http://www.corestandards.org/ELA-Literacy/RST/11-12/3",
+            "targetDescription": "Follow precisely a complex multistep procedure when
+            carrying out experiments, taking measurements, or performing technical
+            tasks; analyze the specific results based on explanations in the text.",
+            "targetCode": "CCSS.ELA-Literacy.RST.11-12.3"
+            },
+            { "targetName": "Problem-Solving",
+            "targetUrl": "https://learning.mozilla.org/en-US/web-literacy/skills#problem-solving",
+            "targetDescription": "Using research, analysis, rapid prototyping, and feedback to formulate a problem and develop, test, and refine the solution/plan.",
+            "targetFramework": "Mozilla 21st Century Skills"
+            }
+        ]
+    }
+    """
+    d: typing.Dict = dict()
+    d["@context"] = row[0] # ?
+    d["id"] = row[1] # 必須項目
+    d["type"] = row[2] # 必須項目
+    d["name"] = row[3] # 必須項目
+    d["description"] = row[4] # 必須項目
+    d["image"] = row[5] # 必須項目
+    d["criteria"] = row[6] # 必須項目
+    d["issuer"] = row[7] # 必須項目
+    return d
+
+def MakeBadgeClassJsonFile(readPath: Path, writePath: Path) -> bool:
+    """
+    読み取ったデータから、BadgeClass.json を作成する
+    """
+    BadgeClassFile: Path = GetBadgeClassFileName(readPath)
+
+    print("\n")
+    logger.info(BadgeClassFile.__repr__())
+    with open(BadgeClassFile, newline='') as badgeClassCsvFile:
+        dialect = csv.Sniffer().sniff(badgeClassCsvFile.read(1024))
+        badgeClassCsvFile.seek(9)
+        hasHeader = csv.Sniffer().has_header(badgeClassCsvFile.read(1024))
+        if hasHeader:
+            logger.info("%s has a header" % BadgeClassFile)
+        else:
+            logger.error("BadgeClass.csvにHeaderがついていません。")
+        badgeClassCsvFile.seek(0)
+
+        wfp = writePath / "BadgeClass.json"
+        reader = csv.reader(badgeClassCsvFile, dialect)
+        line: int = 0
+        for row in reader:
+            if line == 0 and hasHeader:
+                # 0行めで、ヘッダーありなら、スキップする
+                line = line + 1
+                continue
+            if line == 0 and not hasHeader:
+                # headerがない場合
+                jsonDict = AssembleBadgeClassData(row)
+                with open(wfp, mode='wt', encoding='utf-8') as file:
+                    json.dump(AssembleBadgeClassData(row), file, ensure_ascii=False, indent=2)
+                print(json.dumps(jsonDict, ensure_ascii=False, indent=2))
+            elif line == 1 and hasHeader:
+                # headerある場合
+                jsonDict = AssembleBadgeClassData(row)
+                with open(wfp, mode='wt', encoding='utf-8') as file:
+                    json.dump(jsonDict, file, ensure_ascii=False, indent=2)
+                print(json.dumps(jsonDict, ensure_ascii=False, indent=2))
+            else:
+                logger.info("余分なデータがあります。読み飛ばします。")
+            line = line + 1
+    return True
 
 def MakeJsonFiles(readPath: Path, writePath: Path) -> bool:
     """
