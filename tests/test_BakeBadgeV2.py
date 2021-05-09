@@ -292,19 +292,19 @@ class TestValidation(unittest.TestCase):
         MakeAssertionJsonFilesのテスト
         """
         try:
-            if BakeBadgeV2.MakeAssersionJsonFiles(Path("tests"), Path("data")):
-                if Path("data/1").exists():
-                    self.assertEqual(filecmp.cmp(Path("data/1/Assertion.json"), Path("tests/1/Assertion.json"), shallow=False), True)
+            if BakeBadgeV2.MakeAssersionJsonFiles(Path("tests"), Path("output")):
+                if Path("output/1").exists():
+                    self.assertEqual(filecmp.cmp(Path("output/1/Assertion.json"), Path("tests/1/Assertion.json"), shallow=False), True)
                 else:
                     print("Need to execute AssembleAssertionData\n")
             else:
                 print("fail: MakeAssertionJsonFiles\n")
         finally:
-            if Path("data/Issuer.json").exists():
-                Path("data/Issuer.json").unlink()
-            if Path("data/BadgeClass.json").exists():
-                Path("data/BadgeClass.json").unlink()
-            [shutil.rmtree(fl) for fl in Path("data").iterdir()] # 一時データを消去する
+            if Path("output/Issuer.json").exists():
+                Path("output/Issuer.json").unlink()
+            if Path("output/BadgeClass.json").exists():
+                Path("output/BadgeClass.json").unlink()
+            [shutil.rmtree(fl) for fl in Path("output").iterdir()] # 一時データを消去する
             pass
 
     def testMakeBadgeClassJsonFile(self):
@@ -312,13 +312,13 @@ class TestValidation(unittest.TestCase):
         MakeBadgeClassJsonFileのテスト
         """
         try:
-            if BakeBadgeV2.MakeBadgeClassJsonFile(Path("tests"), Path("data")):
-                self.assertEqual(filecmp.cmp(Path("data/BadgeClass.json"),
+            if BakeBadgeV2.MakeBadgeClassJsonFile(Path("tests"), Path("output")):
+                self.assertEqual(filecmp.cmp(Path("output/BadgeClass.json"),
                     Path("tests/BadgeClass.json"), shallow=False), True)
             else:
                 print("fail: MakeBadgeClassJsonFile\n")
         finally:
-            Path("data/BadgeClass.json").unlink() # clean up
+            Path("output/BadgeClass.json").unlink() # clean up
             pass
 
     def testMakeIssuerJsonFile(self):
@@ -326,14 +326,24 @@ class TestValidation(unittest.TestCase):
         MakeIssuerJsonFileのテスト
         """
         try:
-            if BakeBadgeV2.MakeIssuerJsonFile(Path("tests"), Path("data")):
-                self.assertEqual(filecmp.cmp(Path("data/Issuer.json"), 
+            if BakeBadgeV2.MakeIssuerJsonFile(Path("tests"), Path("output")):
+                self.assertEqual(filecmp.cmp(Path("output/Issuer.json"), 
                     Path("tests/Issuer.json"), shallow=False), True)
             else:
                 print("Fail: MakeIssuerJsonFile\n")
         finally:
-            Path("data/Issuer.json").unlink() # clean up
+            Path("output/Issuer.json").unlink() # clean up
             pass # if above line is commentted.
+
+    def testReadAssertionJSON(self):
+        """
+        ReadAssertionJSONのテストを行います。
+        """
+        s1 = BakeBadgeV2.ReadAssertionJSON(Path("tests/1/"))
+        with open(Path("tests/1/Assertion.json"), mode='rt', encoding='utf-8') as file:
+            s2 = file.read()
+        self.assertEqual(s1, s2)
+
 
     def test_csv_file(self):
         """
@@ -353,7 +363,7 @@ class TestMock(unittest.TestCase):
     モックのテストを書く
     """
     # def setUp(self):
-        # p = Path("data")
+        # p = Path("output")
         # print("\n")
         # print("setup mock\n")
         # [pprint.pprint(fl) for fl in p.iterdir()]
@@ -415,6 +425,24 @@ class TestMock(unittest.TestCase):
         # 例外が想定通りであることを確認
         self.assertEqual(str(cm.exception), str(OSError("dummy_error")))
 
+    def testGetImageFileName1(self):
+        """
+        GetImageFileNameの例外発生テスト
+        """
+        with self.assertRaises(FileNotFoundError) as cm:
+            BakeBadgeV2.GetImageFileName(Path("tests"))
+        self.assertEqual(str(cm.exception),
+            str(FileNotFoundError(
+                "指定された場所でpngまたはsvgファイルが見つかりません。")))
+
+    def testGetImageFileName2(self):
+        """
+        - pngファイルの発見テスト
+        """
+        self.assertEqual(
+            BakeBadgeV2.GetImageFileName(Path("sample")),
+            Path("sample/Badge.png"))
+
     # def test_MakeJsonFiles(self):
     #     """
     #     MakeJsonFilesをモックを使ってテストする
@@ -424,13 +452,13 @@ class TestMock(unittest.TestCase):
     #     context, id, type, recipient:type, recipient:hashed, recipient:salt, recipient:identiity, badge, verification:type, issuedOn, Expires
     #     https://w3id.org/openbadges/v2,https://gongova.org/badges/member001gongovaP2020.json,Assertion,email,True,Y4MJO3ZTTYHZTU6YLJKIYOFTHZPINXUV,sha256$9b2b7d2c5c82ec6862e7d57d150b9b57165571fe1abe12c773828368f772efa3,https://gongova.org/badges/gongovaP2020.json,hosted,2021-03-31T23:59:59+00:00,
     #     https://w3id.org/openbadges/v2,https://gongova.org/badges/member001gongovaP2020.json,Assertion,email,True,Y4MJO3ZTTYHZTU6YLJKIYOFTHZPINXUZ,sha256$9b2b7d2c5c82ec6862e7d57d150b9b57165571fe1abe12b773828368f772efa3,https://gongova.org/badges/gongovaP2020.json,hosted,2021-04-30T23:59:59+00:00,""")
-    #     # # tests ディレクトリにいるので data せよ。
+    #     # # tests ディレクトリにいるので outputへ出力 せよ。
     #     # with patch.object(BakeBadgeV2.MakeJsonFiles.AssertionsFile, in_mem_csv, autospec=True):
-    #     #     self.assertEqual(BakeBadgeV2.MakeJsonFiles(Path("tests"), Path("data")), True)
+    #     #     self.assertEqual(BakeBadgeV2.MakeJsonFiles(Path("tests"), Path("output")), True)
 
     #     # m = unittest.mock(spec=Path)
     #     # m.return_value = in_mem_csv
 
 
-    #     self.assertEqual(BakeBadgeV2.MakeJsonFiles(Path("tests"), Path("data")), True)
+    #     self.assertEqual(BakeBadgeV2.MakeJsonFiles(Path("tests"), Path("output")), True)
 
