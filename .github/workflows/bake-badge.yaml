@@ -32,8 +32,9 @@ jobs:
       #    architecture: 'x64'
       - name: Set up ubuntu 20.04 environment
         run: |
-          apt update;apt -y upgrade
-          apt install python3-pip python3-rfc3986 python3-iso8601
+          sudo apt update
+          sudo apt -y upgrade
+          sudo apt install python3-pip python3-rfc3986 python3-iso8601
           pip3 openbadges_bakery
           pip3 -V
           pip3 list
