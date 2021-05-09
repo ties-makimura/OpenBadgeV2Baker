@@ -10,7 +10,10 @@ SHELL := /bin/bash
 #.PHONY: run test clean help
 
 run: ## run the program
-	python3 run.py
+	export INPUTDIR=data;python3 run.py
+
+testrun: ## test run the program
+	export INPUTDIR=tests;python3 run.py
 
 test: ## Do the test
 	# discover: tests directory 内のtest群を実行する。
@@ -21,6 +24,7 @@ test: ## Do the test
 clean: ## Clean up mess
 	rm -rf __pycache__
 	rm -rf .mypy_cache
+#	rm -rf ~/.pylint.d
 	rm OpenBadgeBake.log
 	rm -rf tests/__pycache__
 	rm -rf output/*
