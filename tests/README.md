@@ -9,3 +9,7 @@ Issuer.csv
 
 ## ユニットテスト
 
+make test
+
+python3 標準の unittestを使っています。
+テストデータは、testsディレクトリに置いています。

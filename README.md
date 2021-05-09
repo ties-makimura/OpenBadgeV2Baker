@@ -11,6 +11,19 @@
 + BakeBadgeV2.py モジュール。Docstringつけているから見よ。
 ```
 
+## 追加モジュール
+
+GitHub Actions (以下GHA) で動かすために、ubuntu 20.04 準拠とした。
+
+これらの設定は、手元のpython3.8環境で動かすときに必要です。
+GHAで動かす時には、設定済みなので不要です。
+
+```
+apt install python3-rfc3986 python3-iso8601
+apt install python3-pip
+pip3 openbadge_bakery
+```
+
 ## ライセンス
 
 Apache 2.0 ライセンスです。内容は、LICENSE ファイルを参照してください。
