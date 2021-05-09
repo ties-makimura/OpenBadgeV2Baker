@@ -64,7 +64,7 @@ jobs:
           pwd
           ls -la
           make testrun
-          cp OpenBadgeBake.log BakeData/
+          cp OpenBadgeBake.log BakedData/
           cp -a output/* BakedData/
           # Copy sample Badge
           #
