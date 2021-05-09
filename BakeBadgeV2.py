@@ -1241,6 +1241,7 @@ def ControlCenter() -> None:
         # 
         #
         imageFile: Path = GetImageFileName(idir)
+        imageFileSuffix = imageFile.suffix
         with open(imageFile, mode="rb") as imageFileHandle:
             #
             # 生成されたディレクトリを walk する
@@ -1254,11 +1255,20 @@ def ControlCenter() -> None:
                     assertion_json_string: str = ReadAssertionJSON(walkingDir)
                     # print("------------------------------------")
                     # print(assertion_json_string)
-                    with open(walkingDir / "BakedBadge.png",mode="wb") as wfHndle:
-                        output_file = bake(
-                            imageFileHandle,
-                            assertion_json_string,
-                            wfHndle)
+                    if imageFileSuffix == ".png" or imageFileSuffix == ".PNG":
+                        with open(walkingDir / "BakedBadge.png",mode="wb") as wfHndle:
+                            output_file = bake(
+                                imageFileHandle,
+                                assertion_json_string,
+                                wfHndle)
+                    elif imageFileSuffix == ".svg" or imageFileSuffix == ".SVG":
+                        with open(walkingDir / "BakedBadge.svg", mode="wb") as wfHndle:
+                            output_file = bake(
+                                imageFileHandle,
+                                assertion_json_string,
+                                wfHndle)
+                    else:
+                        raise(ValueError("バッジの拡張子が、png/PNG,svg/SVGではない。"))
     else:
         # 3つの入力ファイルのうち、どれか(全部も?)不正な値が
         # 入っている
