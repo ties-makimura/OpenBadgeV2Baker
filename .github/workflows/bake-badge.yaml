@@ -22,22 +22,30 @@ jobs:
       # Bake Badge
       # 1. push されたデータを検査して、ダメなら終了
       #   1.1 python のインストール
-      - name: Set up Python 3.x
-        uses: actions/setup-python@v2
-        with:
-          # セマンティックバージョン範囲構文もしくは厳密なPythonのバージョン
-          python-version: '3.x'
-          # オプション - x64もしくはx86アーキテクチャ、デフォルトはx64
-          architecture: 'x64'
+      #
+      #- name: Set up Python 3.x
+      #  uses: actions/setup-python@v2
+      #  with:
+      #    # セマンティックバージョン範囲構文もしくは厳密なPythonのバージョン
+      #    python-version: '3.x'
+      #    # オプション - x64もしくはx86アーキテクチャ、デフォルトはx64
+      #    architecture: 'x64'
+      - name: Set up ubuntu 20.04 environment
+        run: |
+          apt update;apt -y upgrade
+          apt install python3-pip python3-rfc3986 python3-iso8601
+          pip3 openbadges_bakery
+          pip3 -V
+          pip3 list
       # 現在のPythonのバージョンを出力して、マトリクスをテストできる
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
       # install pip and apply requirements.txt then show pip version
       # pip install -r requirements.txt
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip -V
+      #- name: Install dependencies
+      #  run: |
+      #    python -m pip install --upgrade pip
+      #    pip -V
       # 2. Bake する環境設定
       #  2.1 pythonのバージョン確認
       #  2.2 pip3 openbadges-bakery
@@ -54,7 +62,8 @@ jobs:
           mkdir BakedData
           pwd
           ls -la
-          cp sample/* BakedData
+          make testrun
+          cp output/* BakedData
           # Copy sample Badge
           #
           # cp source BakedBadges
