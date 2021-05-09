@@ -33,6 +33,9 @@ import re
 import datetime
 import iso8601
 
+# bake
+from openbadges_bakery import bake
+
 #
 # csv file related
 #
@@ -727,6 +730,10 @@ def ScanAssertionsCsv(dir: Path) -> bool:
 
     rpf: Path = dir / "Assertions.csv" # 相対パス付きのファイル名
     logger.info(rpf.__repr__)
+    # ファイルの存在チェック
+    if not rpf.is_file():
+        raise(FileNotFoundError("Assersions.csvが見つかりません。ログを確認してください。"))
+    # 存在したので、内容のチェック
     with open(rpf, newline='') as csvfile:
         # 先読みしてどの、dialectかを判定する
         dialect = csv.Sniffer().sniff(csvfile.read(1024))
@@ -770,6 +777,9 @@ def ScanBadgeClassCsv(dir: Path) -> bool:
 
     rpf: Path = dir / "BadgeClass.csv" # 相対パス付きのファイル名
     logger.info(rpf.__repr__)
+    # ファイルの存在チェック
+    if not rpf.is_file():
+        raise(FileNotFoundError("BadgeClass.csvが見つかりません。ログを確認してください。"))
     with open(rpf, newline='') as csvfile:
         # 先読みしてどの、dialectかを判定する
         dialect = csv.Sniffer().sniff(csvfile.read(1024))
@@ -813,6 +823,9 @@ def ScanIssuerCsv(dir: Path) -> bool:
 
     rpf: Path = dir / "Issuer.csv" # 相対パス付きのファイル名
     logger.info(rpf.__repr__)
+    # ファイルの存在チェック
+    if not rpf.is_file():
+        raise(FileNotFoundError("Issuer.csvが見つかりません。ログを確認してください。"))
     with open(rpf, newline='') as csvfile:
         # 先読みしてどの、dialectかを判定する
         dialect = csv.Sniffer().sniff(csvfile.read(1024))
@@ -957,8 +970,8 @@ def MakeAssersionJsonFiles(readPath: Path, writePath: Path) -> bool:
                 json.dump(jsonDict, file, ensure_ascii=False, indent=2)
             # while not Path(wfp).exists():
             #     time.sleep(1)
-            # if Path("data/1/Assertion.json").exists():
-            #     print("data/1/Assertion.jsonは存在する")
+            # if Path("output/1/Assertion.json").exists():
+            #     print("output/1/Assertion.jsonは存在する")
             # print(json.dumps(jsonDict, ensure_ascii=False, indent=2))
             #
             #---------------------------------
@@ -1157,7 +1170,37 @@ def MakeJsonFiles(readPath: Path, writePath: Path) -> bool:
     #
     return True
 
+def ReadAssertionJSON(readDir: Path) -> str:
+    """
+    指定されたディレクトリパス("output/1")にある、Assrtion.json
+    を読み取って、その内容を返す。
+    サブコマンドのbakeに渡す、assertion_json_string へ渡す
+    データを読み取る。
+    """
+    rtn: str = ""
+    rfp: Path = readDir / "Assertion.json"
+    with open(rfp, mode='rt', encoding='utf-8') as file:
+        rtn = file.read()
+    # print(rtn) # for debug
+    return rtn
 
+def GetImageFileName(readDir: Path) -> Path:
+    """
+    指定されたディレクトリからpngまたはsvgのファイルを1つ
+    返す。複数あっても返すのは一つだけ。
+    最初にpngを探し、なかったらsvgを探す。
+    png,svgファイルを発見できない場合は、例外を上げる。
+    """
+    pngl: typing.List[Path] = list(readDir.glob("*.png"))
+    if len(pngl) != 0:
+        # png ファイルあり
+        return pngl[0]
+    svgl: typing.List[Path] = list(readDir.glob("*.svg"))
+    if len(svgl) != 0:
+        # svg ファイルあり
+        return svgl[0]
+    # 両方なし
+    raise FileNotFoundError("指定された場所でpngまたはsvgファイルが見つかりません。")
 
 def ControlCenter() -> None:
     """
@@ -1168,8 +1211,20 @@ def ControlCenter() -> None:
     bBadgeClass: bool = False
     bIssuer: bool = False
 
-    idir: Path = Path('tests') # input directory
-    odir: Path = Path("data") # output directory
+    print("--------------------------------------")
+    print(os.environ['INPUTDIR'])
+    InputDir=os.environ['INPUTDIR']
+    if InputDir == 'tests' or InputDir == 'data':
+        idir: Path = Path(InputDir)
+    else:
+        raise(ValueError("環境変数が設定されていません。"))
+    # idir: Path = Path('tests') # input directory
+    odir: Path = Path("output") # output directory
+
+        # for real
+    # idir: Path = Path("data")
+    # odir: Path = Path("output")
+
 
     bAssertions = ScanAssertionsCsv(idir)
     bBadgeClass = ScanBadgeClassCsv(idir)
@@ -1182,8 +1237,28 @@ def ControlCenter() -> None:
         MakeAssersionJsonFiles(idir, odir)
         MakeBadgeClassJsonFile(idir, odir)
         MakeIssuerJsonFile(idir, odir)
-
-
+        #
+        # 
+        #
+        imageFile: Path = GetImageFileName(idir)
+        with open(imageFile, mode="rb") as imageFileHandle:
+            #
+            # 生成されたディレクトリを walk する
+            #
+            for flist in odir.iterdir(): # 出力ディレクトリの一覧を取得
+                if flist.is_dir(): # ディレクトリか?
+                    walkingDir: Path = flist
+                    # pprint.pprint(flist)
+                    # そこには、Assertion.json が存在しているという前提
+                    # で、内容をstrにする。
+                    assertion_json_string: str = ReadAssertionJSON(walkingDir)
+                    # print("------------------------------------")
+                    # print(assertion_json_string)
+                    with open(walkingDir / "BakedBadge.png",mode="wb") as wfHndle:
+                        output_file = bake(
+                            imageFileHandle,
+                            assertion_json_string,
+                            wfHndle)
     else:
         # 3つの入力ファイルのうち、どれか(全部も?)不正な値が
         # 入っている
