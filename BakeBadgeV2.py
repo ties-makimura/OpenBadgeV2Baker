@@ -902,12 +902,21 @@ def AssembleAssertionData(row: typing.List[str]) -> typing.Dict:
     d["type"] = row[2] # 必須項目
     d["id"] = row[1] # 必須項目
     # 必須項目
-    d["recipient"] = {
-        "type": row[3],
-        "hashed": row[4].lower(), # true と出力する。
-        "salt": row[5],
-        "identity": row[6]
-    }
+    if row[4].lower() == 'true':
+        d["recipient"] = {
+            "type": row[3],
+            "hashed": True, # true と出力する。
+            "salt": row[5],
+            "identity": row[6]
+        }
+    else:
+         d["recipient"] = {
+            "type": row[3],
+            "hashed": False,
+            "salt": row[5],
+            "identity": row[6]
+        }
+       
     d["badge"] = row[7] # 必須項目
     # 必須項目
     d["verification"] = {
