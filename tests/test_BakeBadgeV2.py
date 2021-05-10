@@ -75,6 +75,23 @@ class TestValidation(unittest.TestCase):
             with self.subTest(context=context, result=result):
                 self.assertEqual(BakeBadgeV2.CheckContext(context), result)
 
+    def testCheckRecipientHashed(self):
+        """
+        CheckRecipientHashedのテストパターン
+        ignore caseかどうか。
+        """
+        test_patterns = [
+            ("True", True),
+            ("TRUE", True),
+            ("TRue", True),
+            ("False", False)
+        ]
+        for param, result in test_patterns:
+            with self.subTest(param=param, result=result):
+                self.assertEqual(
+                    BakeBadgeV2.CheckRecipientHashed(param), result)
+
+
     def testTypeAssertion(self):
         """
         typeが、Assertionかを判定する
@@ -300,11 +317,15 @@ class TestValidation(unittest.TestCase):
             else:
                 print("fail: MakeAssertionJsonFiles\n")
         finally:
+            # 作成したデータを後始末する
             if Path("output/Issuer.json").exists():
                 Path("output/Issuer.json").unlink()
             if Path("output/BadgeClass.json").exists():
                 Path("output/BadgeClass.json").unlink()
-            [shutil.rmtree(fl) for fl in Path("output").iterdir()] # 一時データを消去する
+            # .placeholder 以外のディレクトリを削除する。
+            [shutil.rmtree(fl) 
+                for fl in Path("output").iterdir()
+                if not(Path("output/.placeholder") == fl)] # 一時データを消去する
             pass
 
     def testMakeBadgeClassJsonFile(self):
@@ -430,7 +451,7 @@ class TestMock(unittest.TestCase):
         GetImageFileNameの例外発生テスト
         """
         with self.assertRaises(FileNotFoundError) as cm:
-            BakeBadgeV2.GetImageFileName(Path("tests"))
+            BakeBadgeV2.GetImageFileName(Path("output"))
         self.assertEqual(str(cm.exception),
             str(FileNotFoundError(
                 "指定された場所でpngまたはsvgファイルが見つかりません。")))
