@@ -24,6 +24,37 @@ apt install python3-pip
 pip3 openbadge_bakery
 ```
 
+## 使い方
+
+### 手元の環境
+
+下記の4つのファイルを data/ へ置いて、make run を実行する。
+csvにはheaderありが望ましい。dialect を推定しているので、windowsのExcelでもいけると思う。
+
+- Assertions.csv
+- BadgeClass.csv
+- Issuer.csv
+- pngまたは、svgのファイル
+
+そうすると、 output/ に下記のファイルが生成される。
+
+1/Assertion.json
+  BakedBadge.png または、BakedBadge.svg
+BadgeClass.json
+Issuer.json
+
+1の部分は、人数分の数字になります。
+
+- 
+
+### GHA(GitHub Actions)
+
+現在のworkflowを参照のこと。
+
+## 開発していた環境
+
+type-hinting は、ubuntu 20.04 環境のデフォルトである python3.8に合わせてある。python 3.9 だと type-hinting の書き方が変わる。mypy + VSCode の Jedi-LSP を使っていた。
+
 ## ライセンス
 
 Apache 2.0 ライセンスです。内容は、LICENSE ファイルを参照してください。
