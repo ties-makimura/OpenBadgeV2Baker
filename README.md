@@ -21,7 +21,7 @@ GHAで動かす時には、設定済みなので不要です。
 ```
 apt install python3-rfc3986 python3-iso8601
 apt install python3-pip
-pip3 openbadge_bakery
+pip3 openbadges_bakery
 ```
 
 ## 使い方
