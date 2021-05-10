@@ -355,6 +355,10 @@ def CheckAssersionsData(row: typing.List[str], line: int) -> bool:
     #
     # @context
     #
+    print("------------------------------")
+    print("row[0]")
+    pprint.pprint(row[0])
+
     if CheckContext(row[0]):
         formatted = f'{line}行目の@contextは合っています。'
         logger.info(formatted)
@@ -378,6 +382,9 @@ def CheckAssersionsData(row: typing.List[str], line: int) -> bool:
     #
     # type
     #
+    print("------------------------------")
+    print("row[2]")
+    pprint.pprint(row[2])
     if CheckTypeAssertion(row[2]):
         formatted = f'{line}行目のtypeがAssertionです。'
         logger.info(formatted)
@@ -736,22 +743,25 @@ def ScanAssertionsCsv(dir: Path) -> bool:
     # 存在したので、内容のチェック
     with open(rpf, newline='') as csvfile:
         # 先読みしてどの、dialectかを判定する
-        dialect = csv.Sniffer().sniff(csvfile.read(1024))
+        # dialect = csv.Sniffer().sniff(csvfile.read(1024))
         # logger.info(dialect.__repr__)
-        csvfile.seek(0)
+        # csvfile.seek(0)
         # headerあり?
         # hasHeader = True : あり
         # hasHeader = False: なし
-        hasHeader = csv.Sniffer().has_header(csvfile.read(1024))
-        if hasHeader:  # header行があるかどうか True/False
-            logger.info("%s has a header" % rpf)
-        else:
-            logger.error("Assertions.csvに、Headerがついていません。")
-        csvfile.seek(0)  # 先頭に戻る
+        # hasHeader = csv.Sniffer().has_header(csvfile.read(1024))
+        hasHeader = True
+        # if hasHeader:  # header行があるかどうか True/False
+        #     logger.info("%s has a header" % rpf.name)
+        # else:
+        #     logger.error("Assertions.csvに、Headerがついていません。")
+        # csvfile.seek(0)  # 先頭に戻る
         
-        reader = csv.reader(csvfile, dialect)
+        reader = csv.reader(csvfile, dialect='excel')
         line: int = 0
         for row in reader:
+            print("-------row--------------")
+            pprint.pprint(row)
             if line == 0 and hasHeader:
                 # 0 行めで、ヘッダーありなら、スキップする。
                 line = line + 1
@@ -782,21 +792,22 @@ def ScanBadgeClassCsv(dir: Path) -> bool:
         raise(FileNotFoundError("BadgeClass.csvが見つかりません。ログを確認してください。"))
     with open(rpf, newline='') as csvfile:
         # 先読みしてどの、dialectかを判定する
-        dialect = csv.Sniffer().sniff(csvfile.read(1024))
-        # pprint.pprint(dialect)
-        # logger.info(dialect.__repr__)
-        csvfile.seek(0)
-        # headerあり?
-        # hasHeader = True : あり
-        # hasHeader = False: なし
-        hasHeader = csv.Sniffer().has_header(csvfile.read(1024))
-        if hasHeader:  # header行があるかどうか True/False
-            logger.info("%s has a header" % rpf)
-        else:
-            logger.error("BadgeClass.csvに、Headerがついていません。")
-        csvfile.seek(0)  # 先頭に戻る
+        # dialect = csv.Sniffer().sniff(csvfile.read(1024))
+        # # pprint.pprint(dialect)
+        # # logger.info(dialect.__repr__)
+        # csvfile.seek(0)
+        # # headerあり?
+        # # hasHeader = True : あり
+        # # hasHeader = False: なし
+        # hasHeader = csv.Sniffer().has_header(csvfile.read(1024))
+        hasHeader=True
+        # if hasHeader:  # header行があるかどうか True/False
+        #     logger.info("%s has a header" % rpf)
+        # else:
+        #     logger.error("BadgeClass.csvに、Headerがついていません。")
+        # csvfile.seek(0)  # 先頭に戻る
         
-        reader = csv.reader(csvfile, dialect)
+        reader = csv.reader(csvfile, dialect='excel')
         line: int = 0
         for row in reader:
             if line == 0 and hasHeader:
@@ -828,21 +839,22 @@ def ScanIssuerCsv(dir: Path) -> bool:
         raise(FileNotFoundError("Issuer.csvが見つかりません。ログを確認してください。"))
     with open(rpf, newline='') as csvfile:
         # 先読みしてどの、dialectかを判定する
-        dialect = csv.Sniffer().sniff(csvfile.read(1024))
-        # pprint.pprint(dialect)
-        # logger.info(dialect.__repr__)
-        csvfile.seek(0)
-        # headerあり?
-        # hasHeader = True : あり
-        # hasHeader = False: なし
-        hasHeader = csv.Sniffer().has_header(csvfile.read(1024))
-        if hasHeader:  # header行があるかどうか True/False
-            logger.info("%s has a header" % rpf)
-        else:
-            logger.error("Issuer.csvに、Headerがついていません。")
-        csvfile.seek(0)  # 先頭に戻る
+        # dialect = csv.Sniffer().sniff(csvfile.read(1024))
+        # # pprint.pprint(dialect)
+        # # logger.info(dialect.__repr__)
+        # csvfile.seek(0)
+        # # headerあり?
+        # # hasHeader = True : あり
+        # # hasHeader = False: なし
+        # hasHeader = csv.Sniffer().has_header(csvfile.read(1024))
+        hasHeader=True
+        # if hasHeader:  # header行があるかどうか True/False
+        #     logger.info("%s has a header" % rpf)
+        # else:
+        #     logger.error("Issuer.csvに、Headerがついていません。")
+        # csvfile.seek(0)  # 先頭に戻る
         
-        reader = csv.reader(csvfile, dialect)
+        reader = csv.reader(csvfile, dialect='excel')
         line: int = 0
         for row in reader:
             if line == 0 and hasHeader:
@@ -883,6 +895,8 @@ def AssembleAssertionData(row: typing.List[str]) -> typing.Dict:
         }
     }
     """
+    print("-------AssembbleAssertionData--------")
+    pprint.pprint(row)
     d: typing.Dict = dict()
     d["@context"] = row[0]
     d["type"] = row[2] # 必須項目
@@ -927,20 +941,21 @@ def MakeAssersionJsonFiles(readPath: Path, writePath: Path) -> bool:
     print("\n") # 改行
     logger.info(AssertionsFile.__repr__())
     with open(AssertionsFile, newline='') as assertionsCsvFile:
-        dialect = csv.Sniffer().sniff(assertionsCsvFile.read(1024))
+        # dialect = csv.Sniffer().sniff(assertionsCsvFile.read(1024))
         # logger.info(dialect.__repr__)
-        assertionsCsvFile.seek(0)
+        # assertionsCsvFile.seek(0)
         # headerあり?
         # hasHeader = True : あり
         # hasHeader = False: なし
-        hasHeader = csv.Sniffer().has_header(assertionsCsvFile.read(1024))
-        if hasHeader:  # header行があるかどうか True/False
-            logger.info("%s has a header" % AssertionsFile)
-        else:
-            logger.error("Assertions.csvに、Headerがついていません。")
-        assertionsCsvFile.seek(0)  # 先頭に戻る
+        # hasHeader = csv.Sniffer().has_header(assertionsCsvFile.read(1024))
+        hasHeader = True
+        # if hasHeader:  # header行があるかどうか True/False
+        #     logger.info("%s has a header" % AssertionsFile)
+        # else:
+        #     logger.error("Assertions.csvに、Headerがついていません。")
+        # assertionsCsvFile.seek(0)  # 先頭に戻る
         
-        reader = csv.reader(assertionsCsvFile, dialect)
+        reader = csv.reader(assertionsCsvFile, dialect='excel')
         line: int = 0
         for row in reader:
             if line == 0 and hasHeader:
@@ -1036,17 +1051,18 @@ def MakeBadgeClassJsonFile(readPath: Path, writePath: Path) -> bool:
     print("\n")
     logger.info(BadgeClassFile.__repr__())
     with open(BadgeClassFile, newline='') as badgeClassCsvFile:
-        dialect = csv.Sniffer().sniff(badgeClassCsvFile.read(1024))
-        badgeClassCsvFile.seek(0)
-        hasHeader = csv.Sniffer().has_header(badgeClassCsvFile.read(1024))
-        if hasHeader:
-            logger.info("%s has a header" % BadgeClassFile)
-        else:
-            logger.error("BadgeClass.csvにHeaderがついていません。")
-        badgeClassCsvFile.seek(0)
+        # dialect = csv.Sniffer().sniff(badgeClassCsvFile.read(1024))
+        # badgeClassCsvFile.seek(0)
+        # hasHeader = csv.Sniffer().has_header(badgeClassCsvFile.read(1024))
+        hasHeader = True
+        # if hasHeader:
+        #     logger.info("%s has a header" % BadgeClassFile)
+        # else:
+        #     logger.error("BadgeClass.csvにHeaderがついていません。")
+        # badgeClassCsvFile.seek(0)
 
         wfp = writePath / "BadgeClass.json"
-        reader = csv.reader(badgeClassCsvFile, dialect)
+        reader = csv.reader(badgeClassCsvFile,  dialect='excel')
         line: int = 0
         for row in reader:
             if line == 0 and hasHeader:
@@ -1114,17 +1130,18 @@ def MakeIssuerJsonFile(readPath: Path, writePath: Path) -> bool:
     print("\n")
     logger.info(IssuerFile.__repr__())
     with open(IssuerFile, newline='') as issuerCsvFile:
-        dialect = csv.Sniffer().sniff(issuerCsvFile.read(1024))
-        issuerCsvFile.seek(0)
-        hasHeader = csv.Sniffer().has_header(issuerCsvFile.read(1024))
-        if hasHeader:
-            logger.info("%s has a header" % IssuerFile)
-        else:
-            logger.error("Issuer.csvにHeaderがついていません。")
-        issuerCsvFile.seek(0)
+        # dialect = csv.Sniffer().sniff(issuerCsvFile.read(1024))
+        # issuerCsvFile.seek(0)
+        # hasHeader = csv.Sniffer().has_header(issuerCsvFile.read(1024))
+        hasHeader = True
+        # if hasHeader:
+        #     logger.info("%s has a header" % IssuerFile)
+        # else:
+        #     logger.error("Issuer.csvにHeaderがついていません。")
+        # issuerCsvFile.seek(0)
 
         wfp = writePath / "Issuer.json"
-        reader = csv.reader(issuerCsvFile, dialect)
+        reader = csv.reader(issuerCsvFile, dialect='excel')
         line: int = 0
         for row in reader:
             if line == 0 and hasHeader:
