@@ -172,7 +172,7 @@ def CheckRecipientHashed(param: str) -> bool:
     TRUEかどうかを判定する。
     """
     regex = r'^TRUE'
-    if (re.search(regex, param)):
+    if (re.search(regex, param, re.IGNORECASE)):
         return True
     else:
         return False
