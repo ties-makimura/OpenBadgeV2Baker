@@ -171,7 +171,7 @@ def CheckRecipientHashed(param: str) -> bool:
     """
     TRUEかどうかを判定する。
     """
-    regex = r'^TRUE'
+    regex = r'^true'
     if (re.search(regex, param, re.IGNORECASE)):
         return True
     else:
@@ -408,11 +408,11 @@ def CheckAssersionsData(row: typing.List[str], line: int) -> bool:
     # recipient:hashed
     #
     if CheckRecipientHashed(row[4]):
-        formatted = f'{line}行目のrecipient:hashedはTrueです。'
+        formatted = f'{line}行目のrecipient:hashedはtrueです。'
         logger.info(formatted)
         bErrorHappend[4] = False
     else:
-        formatted = f'{line}行目のrecipient:hashedはTrueではありません。'
+        formatted = f'{line}行目のrecipient:hashedはtrueではありません。'
         logger.error(formatted)
         bErrorHappend[4] = True
     #
@@ -904,7 +904,7 @@ def AssembleAssertionData(row: typing.List[str]) -> typing.Dict:
     # 必須項目
     d["recipient"] = {
         "type": row[3],
-        "hashed": row[4],
+        "hashed": row[4].lower(), # true と出力する。
         "salt": row[5],
         "identity": row[6]
     }
