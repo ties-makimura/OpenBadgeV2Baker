@@ -169,9 +169,9 @@ def CheckRecipientType(typ: str) -> bool:
 
 def CheckRecipientHashed(param: str) -> bool:
     """
-    Trueかどうかを判定する。
+    TRUEかどうかを判定する。
     """
-    regex = r'^True'
+    regex = r'^TRUE'
     if (re.search(regex, param)):
         return True
     else:
