@@ -45,8 +45,6 @@ Issuer.json
 
 1の部分は、人数分の数字になります。
 
-- 
-
 ### GHA(GitHub Actions)
 
 現在のworkflowを参照のこと。
@@ -54,6 +52,26 @@ Issuer.json
 ## 開発していた環境
 
 type-hinting は、ubuntu 20.04 環境のデフォルトである python3.8に合わせてある。python 3.9 だと type-hinting の書き方が変わる。mypy + VSCode の Jedi-LSP を使っていた。
+
+## CSV 作成時の TIPs
+
+自動的にファイルを生成するので、uplaod 作業を楽にする命名方法がある。
+
+### Assertions.csv
+
+- id の部分の 下位は、数字/Assertion.json 具体例 2/Assertion.json にする
+ディレクトリを作成してファイル名を変更する手間を考えると合わせるのが得です。
+
+- badge の部分も上記と同様です。
+数字のディレクトリ配下にAssertion.json と BakedBadge.png または、BakedBadge.svg という名前でBadgeができあがります。
+
+### BadgeClass.csv
+
+- 発見したら追記します。
+
+### Issuer.csv
+
+- 発見したら追記します。
 
 ## ライセンス
 
