@@ -365,6 +365,18 @@ class TestValidation(unittest.TestCase):
             s2 = file.read()
         self.assertEqual(s1, s2)
 
+    def testBakeBadge(self):
+        """
+        testBakeBadge: たんに呼び出して動作確認する。
+        """
+        imageFile: Path = Path("data/Badge.png")
+        outputFile: Path = Path("tests/1/BakedBadge.png")
+        json_string = BakeBadgeV2.ReadAssertionJSON(Path("tests/1/"))
+
+        try:
+            BakeBadgeV2.BakeBadge(imageFile, outputFile, json_string)
+        finally:
+            Path("tests/1/BakedBadge.png").unlink()
 
     def test_csv_file(self):
         """
