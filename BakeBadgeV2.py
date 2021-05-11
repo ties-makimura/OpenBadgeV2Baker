@@ -33,8 +33,14 @@ import re
 import datetime
 import iso8601
 
+# check_image_type が png ファイルなのに判定に失敗することがあり
+# 疎結合して問題を切り分ける。具体的には、moduleとして使うのを
+# やめて、subprocessでコマンドとして切り出す。
+# 性能的には良くないが、動かないのはもっと良くない。
 # bake
-from openbadges_bakery import bake
+# from openbadges_bakery.utils import bake
+import subprocess
+import traceback # subprocess 失敗時のトレースバックを取る
 
 #
 # csv file related
@@ -355,10 +361,6 @@ def CheckAssersionsData(row: typing.List[str], line: int) -> bool:
     #
     # @context
     #
-    print("------------------------------")
-    print("row[0]")
-    pprint.pprint(row[0])
-
     if CheckContext(row[0]):
         formatted = f'{line}行目の@contextは合っています。'
         logger.info(formatted)
@@ -382,9 +384,6 @@ def CheckAssersionsData(row: typing.List[str], line: int) -> bool:
     #
     # type
     #
-    print("------------------------------")
-    print("row[2]")
-    pprint.pprint(row[2])
     if CheckTypeAssertion(row[2]):
         formatted = f'{line}行目のtypeがAssertionです。'
         logger.info(formatted)
@@ -760,8 +759,6 @@ def ScanAssertionsCsv(dir: Path) -> bool:
         reader = csv.reader(csvfile, dialect='excel')
         line: int = 0
         for row in reader:
-            print("-------row--------------")
-            pprint.pprint(row)
             if line == 0 and hasHeader:
                 # 0 行めで、ヘッダーありなら、スキップする。
                 line = line + 1
@@ -895,8 +892,6 @@ def AssembleAssertionData(row: typing.List[str]) -> typing.Dict:
         }
     }
     """
-    print("-------AssembbleAssertionData--------")
-    pprint.pprint(row)
     d: typing.Dict = dict()
     d["@context"] = row[0]
     d["type"] = row[2] # 必須項目
@@ -926,10 +921,6 @@ def AssembleAssertionData(row: typing.List[str]) -> typing.Dict:
     if len(row[10]) != 0:
         # 選択項目
         d["expires"] = row[10]
-    # print("AssembleAssertionData\n")
-    # pprint.pprint(d)
-    # print("-----------------------------------\n")
-    # print(json.dumps(d, ensure_ascii=False, indent=2))
     return d
 
 def GetAssertionFileName(readPath: Path) -> Path:
@@ -978,27 +969,12 @@ def MakeAssersionJsonFiles(readPath: Path, writePath: Path) -> bool:
                 raise(FileExistsError("ディレクトリが存在します。処理を中断します。"))
             # filesystem の関係でかけないことは考慮しない。
             # データの最大行でチェックすべき
-            # pprint.pprint(d)
-            # pprint.pprint(d.exists())
             d.mkdir() # ディレクトリ作成
-            # pprint.pprint(d)
-            # pprint.pprint(d.exists())
-            #------------------------------------------
             jsonDict = AssembleAssertionData(row)
-            #------------------------------------------
             # JSONファイル生成
             wfp: Path = d / "Assertion.json"
-            # print("wfp")
-            # pprint.pprint(wfp)
             with open(wfp, mode='wt', encoding='utf-8') as file:
                 json.dump(jsonDict, file, ensure_ascii=False, indent=2)
-            # while not Path(wfp).exists():
-            #     time.sleep(1)
-            # if Path("output/1/Assertion.json").exists():
-            #     print("output/1/Assertion.jsonは存在する")
-            # print(json.dumps(jsonDict, ensure_ascii=False, indent=2))
-            #
-            #---------------------------------
             line = line + 1
     return True
 
@@ -1207,7 +1183,6 @@ def ReadAssertionJSON(readDir: Path) -> str:
     rfp: Path = readDir / "Assertion.json"
     with open(rfp, mode='rt', encoding='utf-8') as file:
         rtn = file.read()
-    # print(rtn) # for debug
     return rtn
 
 def GetImageFileName(readDir: Path) -> Path:
@@ -1228,6 +1203,50 @@ def GetImageFileName(readDir: Path) -> Path:
     # 両方なし
     raise FileNotFoundError("指定された場所でpngまたはsvgファイルが見つかりません。")
 
+def BakeBadge(imageFile: Path, outputFile: Path, json_string: str) -> None:
+    """
+    imageFile: 元ネタの画像ファイル pngまたは、svg への path + filename
+    outputFile: 出力する png または、svg への path + filename
+    json_string: 焼きこむjsonの文字列
+
+    subprocess.run を用いて bakery bake コマンドを起動する。
+
+    shell インジェクションを警戒するので、引数には、空白やアスタリスクなどの
+    shellが展開するワイルドカードを利用しない。将来拡張するなら、shelx.quote()
+    などを使って対処すること。
+
+    $ bakery bake --help
+    Usage: bakery bake [OPTIONS] INPUT_FILE OUTPUT_FILE
+
+    This command bakes Open Badges data into a file and saves the result to an
+    output file.
+
+    Positional Arguments:
+
+        Input filename:    File must exist.
+    
+        Output filename:   If file exists, it will be overwritten.
+
+    Options:
+    --data TEXT
+    --help       Show this message and exit.
+    """
+    # Pathに関しては、subprocess.run に渡すときに、絶対パスに変換して
+    # 渡すことで、意図しないパスのデータを呼び出すのを避ける。
+    image_abs_file: str = str(imageFile.resolve())
+    output_abs_file: str = str(outputFile.resolve())
+    # コマンドライン組み立て
+    cmdline = "bakery bake --data '" + json_string + "' " + image_abs_file + " " + output_abs_file
+    # コマンドラインでは下記が正解だった。
+    # $ bakery bake --data '{\n  "@context": "https://w3id.org/openbadges/v2",\n  "type": "Assertion",\n  "id": "https://gongova.org/badges/member001gongovaP2020.json",\n  "recipient": {\n    "type": "email",\n    "hashed": true,\n    "salt": "Y4MJO3ZTTYHZTU6YLJKIYOFTHZPINXUV",\n    "identity": "sha256$9b2b7d2c5c82ec6862e7d57d150b9b57165571fe1abe12c773828368f772efa3"\n  },\n  "badge": "https://gongova.org/badges/gongovaP2020.json",\n  "verification": {\n    "type": "hosted"\n  },\n  "issuedOn": "2021-03-31T23:59:59+00:00"\n}' data/Badge.png tests/1/BakedBadge.png
+    # tests/1/BakedBadge.png is done baking. Remember to let it cool
+    try:
+        subprocess.run(cmdline, check=True, shell=True)
+    except subprocess.CalledProcessError as e:
+        print('bakery bake の実行に失敗しました', file=sys.stderr)
+        print(traceback.format_exc()) # traceback 出力
+
+
 def ControlCenter() -> None:
     """
     読み取り後のメイン処理
@@ -1244,13 +1263,7 @@ def ControlCenter() -> None:
         idir: Path = Path(InputDir)
     else:
         raise(ValueError("環境変数が設定されていません。"))
-    # idir: Path = Path('tests') # input directory
     odir: Path = Path("output") # output directory
-
-        # for real
-    # idir: Path = Path("data")
-    # odir: Path = Path("output")
-
 
     bAssertions = ScanAssertionsCsv(idir)
     bBadgeClass = ScanBadgeClassCsv(idir)
@@ -1267,7 +1280,7 @@ def ControlCenter() -> None:
         # 
         #
         imageFile: Path = GetImageFileName(idir)
-        imageFileSuffix = imageFile.suffix
+        imageFileSuffix: str = imageFile.suffix
         with open(imageFile, mode="rb") as imageFileHandle:
             #
             # 生成されたディレクトリを walk する
@@ -1279,20 +1292,14 @@ def ControlCenter() -> None:
                     # そこには、Assertion.json が存在しているという前提
                     # で、内容をstrにする。
                     assertion_json_string: str = ReadAssertionJSON(walkingDir)
-                    # print("------------------------------------")
-                    # print(assertion_json_string)
                     if imageFileSuffix == ".png" or imageFileSuffix == ".PNG":
-                        with open(walkingDir / "BakedBadge.png",mode="wb") as wfHndle:
-                            output_file = bake(
-                                imageFileHandle,
-                                assertion_json_string,
-                                wfHndle)
+                        BakeBadge(imageFile,
+                            walkingDir / "BakedBadge.png",
+                            assertion_json_string)
                     elif imageFileSuffix == ".svg" or imageFileSuffix == ".SVG":
-                        with open(walkingDir / "BakedBadge.svg", mode="wb") as wfHndle:
-                            output_file = bake(
-                                imageFileHandle,
-                                assertion_json_string,
-                                wfHndle)
+                        BakeBadge(imageFile,
+                            walkingDir / "BakedBadge.svg",
+                            assertion_json_string)
                     else:
                         raise(ValueError("バッジの拡張子が、png/PNG,svg/SVGではない。"))
     else:
