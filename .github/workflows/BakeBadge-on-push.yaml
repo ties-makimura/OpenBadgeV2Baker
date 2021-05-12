@@ -55,13 +55,15 @@ jobs:
       #       - JSONデータ?
       #       - [ ] source/destination ディレクトリを確定する。
       #   全部終わった後にコピーするかは要検討
-      - name: Create artifact files
+      - name: Prepare artifact files
         run: |
           mkdir BakedData
           make run
           cp OpenBadgeBake.log BakedData/
           cp -a output/* BakedData/
-      - uses: actions/upload-artifact@v1
+      - name: Create artifact files
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v1
         with:
           name: BakedBadges
           path: BakedData
