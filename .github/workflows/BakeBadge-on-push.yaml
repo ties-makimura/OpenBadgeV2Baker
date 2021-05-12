@@ -1,0 +1,67 @@
+name: Bake-Open-Digital-BadgeV2 on push
+on: [push]
+jobs:
+  main:
+    name: Bake Digital Badge on push
+    runs-on: ubuntu-latest
+    steps:
+      # 自分のrepository を check out する。
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          repository: '${{ github.repository }}'
+          ref: main
+      # Identity を設定
+      - name: set identity
+        run: |
+          git config --global user.email "bot@example.com"
+          git config --global user.name "bot"
+      # Bake Badge
+      # 1. push されたデータを検査して、ダメなら終了
+      #   1.1 python のインストール
+      #
+      #- name: Set up Python 3.x
+      #  uses: actions/setup-python@v2
+      #  with:
+      #    # セマンティックバージョン範囲構文もしくは厳密なPythonのバージョン
+      #    python-version: '3.x'
+      #    # オプション - x64もしくはx86アーキテクチャ、デフォルトはx64
+      #    architecture: 'x64'
+      - name: Set up ubuntu 20.04 environment
+        run: |
+          sudo apt update
+          sudo apt -y upgrade
+          sudo apt install python3-pip python3-rfc3986 python3-iso8601
+          pip3 install openbadges_bakery
+          pip3 -V
+          pip3 list
+      # 現在のPythonのバージョンを出力して、マトリクスをテストできる
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+      # install pip and apply requirements.txt then show pip version
+      # pip install -r requirements.txt
+      #- name: Install dependencies
+      #  run: |
+      #    python -m pip install --upgrade pip
+      #    pip -V
+      # 2. Bake する環境設定
+      #  2.1 pythonのバージョン確認
+      #  2.2 pip3 openbadges-bakery
+      # 3. もらったデータを読みつつBakeする
+      #   3.1 何らかのエラー、例外の発生
+      #   3.2 成功したら焼いたデータをID毎にArtifactの領域へコピー
+      #     - なにをコピーするのかも検討する。
+      #       - badge
+      #       - JSONデータ?
+      #       - [ ] source/destination ディレクトリを確定する。
+      #   全部終わった後にコピーするかは要検討
+      - name: Create artifact files
+        run: |
+          mkdir BakedData
+          make run
+          cp OpenBadgeBake.log BakedData/
+          cp -a output/* BakedData/
+      - uses: actions/upload-artifact@v1
+        with:
+          name: BakedBadges
+          path: BakedData
