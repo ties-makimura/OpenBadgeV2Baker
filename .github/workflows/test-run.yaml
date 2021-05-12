@@ -1,4 +1,4 @@
-name: Bake-Open-Digital-BadgeV2
+name: testrun Bake-Open-Digital-BadgeV2
 on:
   # 完成時には、pushをトリガとする。
   schedule:
