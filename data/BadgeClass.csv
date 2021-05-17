@@ -1,2 +1,2 @@
 @context,id,type,name,description,image,criteria,issuer
-https://w3id.org/openbadges/v2,https://www.example.net/badges/BadgeClass.json,BadgeClass,"参加証2021 Certificate of Completion: 2021",このバッジはサンプルです,https://www.example.net/badges/BadgeClass.png,https://www.example.net/badges/BadgeClass.txt,https://www.example.net/badges/Issuer.json
+https://w3id.org/openbadges/v2,https://www.cccties.org/badges/BadgeClass.json,BadgeClass,"参加証2021 Certificate of Completion: 2021",このバッジはサンプルです,https://www.cccties.org/badges/BadgeClass.png,https://www.cccties.org/badges/BadgeClass.txt,https://www.cccties.org/badges/Issuer.json
