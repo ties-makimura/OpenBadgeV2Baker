@@ -1,2 +1,2 @@
 @context,id,type,name,url,email
-https://w3id.org/openbadges/v2,https://www.cccties.org/badges/Issuer.json,Issuer,"特定非営利活動法人 Nonprofit Organization",https://www.cccties.org/,contact@cccties.org
+https://w3id.org/openbadges/v2,https://www.example.net/badges/Issuer.json,Issuer,"特定非営利活動法人 Nonprofit Organization",https://www.example.net/,contact@example.net
