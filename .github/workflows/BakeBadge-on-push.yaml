@@ -32,10 +32,11 @@ jobs:
           sudo apt update
           sudo apt -y upgrade
           sudo apt install python3-pip python3-rfc3986 python3-iso8601
-          # pip3 install openbadges_bakery
-          pip3 install openbadges-bakery==1.2.4
+          pip3 install openbadges_bakery
+          # pip3 install openbadges-bakery==1.2.4
           pip3 -V
           pip3 list
+          pip3 show openbadges-bakery
       # 現在のPythonのバージョンを出力して、マトリクスをテストできる
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
